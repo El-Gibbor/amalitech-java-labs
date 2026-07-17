@@ -1,8 +1,10 @@
+/** Standard customer type with no benefits beyond the Customer defaults. */
 public class RegularCustomer extends Customer {
+    /** Creates a regular customer. */
     public RegularCustomer(String name, int age, String contact, String address) {
         super(name, age, contact, address);
     }
-    
+
     @Override
     public void displayCustomerDetails() {
         System.out.println("Customer ID: " + getCustomerId());

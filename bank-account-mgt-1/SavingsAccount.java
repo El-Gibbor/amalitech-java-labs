@@ -1,7 +1,12 @@
+/**
+ * A savings account that earns interest and enforces a minimum balance
+ * below which withdrawals are refused.
+ */
 public class SavingsAccount extends Account {
     private double interestRate;
     private double minimumBalance;
 
+    /** Creates a savings account with the standard interest rate and minimum balance. */
     public SavingsAccount(Customer customer, double balance) {
         super(customer, balance);
         this.interestRate = 0.035;
@@ -30,16 +35,21 @@ public class SavingsAccount extends Account {
                 interestRate * 100, minimumBalance);
     }
 
-    // reject if min balance is not met, then let Account do the subtraction
+    /** @return true if the withdrawal succeeded, false if amount was invalid or would breach the minimum balance */
     @Override
     public boolean withdraw(double amount) {
-        if (getBalance() - amount < minimumBalance) {
+        if (wouldBreachMinimumBalance(amount)) {
             return false;
         }
         return super.withdraw(amount);
     }
 
+    private boolean wouldBreachMinimumBalance(double amount) {
+        return getBalance() - amount < minimumBalance;
+    }
+
+    /** @return the interest earned on the current balance at this account's rate */
     public double calculateInterest() {
-        return getBalance() * interestRate;     
+        return getBalance() * interestRate;
     }
 }
