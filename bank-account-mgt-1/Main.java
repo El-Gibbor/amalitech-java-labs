@@ -97,72 +97,68 @@ public class Main {
                     System.out.print("Enter Account Number: ");
                     String accountNumber = scanner.nextLine();
 
-                    Account account = accountManager.findAccount(accountNumber);
-                    if (account == null) {
-                        System.out.println("\nError: Account not found. Please check the number and try again.");
-                        System.out.print("\nPress Enter to continue... ");
-                        scanner.nextLine();
-                        break;
-                    }
+                    try {
+                        Account account = accountManager.findAccount(accountNumber);
 
-                    System.out.println("\nAccount Details:");
-                    System.out.println("Customer: " + account.getCustomer().getName());
-                    System.out.println("Account Type: " + account.getAccountType());
-                    System.out.printf("Current Balance: $%,.2f%n", account.getBalance());
+                        System.out.println("\nAccount Details:");
+                        System.out.println("Customer: " + account.getCustomer().getName());
+                        System.out.println("Account Type: " + account.getAccountType());
+                        System.out.printf("Current Balance: $%,.2f%n", account.getBalance());
 
-                    System.out.println("\nTransaction type:");
-                    System.out.println("1. Deposit");
-                    System.out.println("2. Withdrawal");
-                    int transactionType = readIntInRange(scanner, "\nSelect type (1-2): ", 1, 2);
+                        System.out.println("\nTransaction type:");
+                        System.out.println("1. Deposit");
+                        System.out.println("2. Withdrawal");
+                        int transactionType = readIntInRange(scanner, "\nSelect type (1-2): ", 1, 2);
 
-                    String type;
-                    if (transactionType == 2) {
-                        type = "Withdrawal";
-                    } else {
-                        type = "Deposit";
-                    }
-
-                    double amount = readPositiveDouble(scanner, "\nEnter amount: $");
-
-                    double previousBalance = account.getBalance();
-                    boolean success = account.processTransaction(amount, type);
-                    if (!success) {
-                        System.out.println(
-                                "\nTransaction Failed: the amount is invalid or the balance rules were not met.");
-                        System.out.printf("Current balance: $%,.2f%n", account.getBalance());
-                        System.out.print("\nPress Enter to continue... ");
-                        scanner.nextLine();
-                        break;
-                    }
-
-                    double newBalance = account.getBalance();
-                    Transaction transaction = new Transaction(account.getAccountNumber(), type, amount, newBalance);
-
-                    System.out.println("\nTRANSACTION CONFIRMATION");
-                    System.out.println("─────────────────────────────────────────────");
-                    System.out.println("Transaction ID: " + transaction.getTransactionId());
-                    System.out.println("Account: " + account.getAccountNumber());
-                    System.out.println("Type: " + type.toUpperCase());
-                    System.out.printf("Amount: $%,.2f%n", amount);
-                    System.out.printf("Previous Balance: $%,.2f%n", previousBalance);
-                    System.out.printf("New Balance: $%,.2f%n", newBalance);
-                    System.out.println("Date/Time: " + transaction.getTimestamp());
-                    System.out.println("─────────────────────────────────────────────");
-
-                    System.out.print("\nConfirm transaction? (Y/N): ");
-                    String confirm = scanner.nextLine();
-
-                    if (confirm.equalsIgnoreCase("Y")) {
-                        transactionManager.addTransaction(transaction);
-                        System.out.println("\n[OK] Transaction completed successfully!");
-                    } else {
-                        // undo the balance change; the transaction is not recorded
-                        if (type.equalsIgnoreCase("Deposit")) {
-                            account.withdraw(amount);
+                        String type;
+                        if (transactionType == 2) {
+                            type = "Withdrawal";
                         } else {
-                            account.deposit(amount);
+                            type = "Deposit";
                         }
-                        System.out.println("\nTransaction cancelled. No changes were saved.");
+
+                        double amount = readPositiveDouble(scanner, "\nEnter amount: $");
+
+                        double previousBalance = account.getBalance();
+                        account.processTransaction(amount, type);
+                        double newBalance = account.getBalance();
+
+                        Transaction transaction = new Transaction(account.getAccountNumber(), type, amount, newBalance);
+
+                        System.out.println("\nTRANSACTION CONFIRMATION");
+                        System.out.println("─────────────────────────────────────────────");
+                        System.out.println("Transaction ID: " + transaction.getTransactionId());
+                        System.out.println("Account: " + account.getAccountNumber());
+                        System.out.println("Type: " + type.toUpperCase());
+                        System.out.printf("Amount: $%,.2f%n", amount);
+                        System.out.printf("Previous Balance: $%,.2f%n", previousBalance);
+                        System.out.printf("New Balance: $%,.2f%n", newBalance);
+                        System.out.println("Date/Time: " + transaction.getTimestamp());
+                        System.out.println("─────────────────────────────────────────────");
+
+                        System.out.print("\nConfirm transaction? (Y/N): ");
+                        String confirm = scanner.nextLine();
+
+                        if (confirm.equalsIgnoreCase("Y")) {
+                            transactionManager.addTransaction(transaction);
+                            System.out.println("\n[OK] Transaction completed successfully!");
+                        } else {
+                            // undo the balance change; the transaction is not recorded
+                            if (type.equalsIgnoreCase("Deposit")) {
+                                account.withdraw(amount);
+                            } else {
+                                account.deposit(amount);
+                            }
+                            System.out.println("\nTransaction cancelled. No changes were saved.");
+                        }
+                    } catch (InvalidAccountException e) {
+                        System.out.println("\n❌ Error: " + e.getMessage());
+                    } catch (InvalidAmountException e) {
+                        System.out.println("\n❌ Error: " + e.getMessage());
+                    } catch (InsufficientFundsException e) {
+                        System.out.println("\n❌ Transaction Failed: " + e.getMessage());
+                    } catch (OverdraftExceededException e) {
+                        System.out.println("\n❌ Transaction Failed: " + e.getMessage());
                     }
 
                     System.out.print("\nPress Enter to continue... ");
@@ -176,43 +172,41 @@ public class Main {
                     System.out.print("Enter Account Number: ");
                     String accountNumber = scanner.nextLine();
 
-                    Account account = accountManager.findAccount(accountNumber);
-                    if (account == null) {
-                        System.out.println("\nError: Account not found. Please check the number and try again.");
-                        System.out.print("\nPress Enter to continue... ");
-                        scanner.nextLine();
-                        break;
-                    }
+                    try {
+                        Account account = accountManager.findAccount(accountNumber);
 
-                    System.out.println(
-                            "\nAccount: " + account.getAccountNumber() + " - " + account.getCustomer().getName());
-                    System.out.println("Account Type: " + account.getAccountType());
-                    System.out.printf("Current Balance: $%,.2f%n", account.getBalance());
+                        System.out.println(
+                                "\nAccount: " + account.getAccountNumber() + " - " + account.getCustomer().getName());
+                        System.out.println("Account Type: " + account.getAccountType());
+                        System.out.printf("Current Balance: $%,.2f%n", account.getBalance());
 
-                    double totalDeposits = transactionManager.calculateTotalDeposits(account.getAccountNumber());
-                    double totalWithdrawals = transactionManager.calculateTotalWithdrawals(account.getAccountNumber());
-                    boolean hasTransactions = totalDeposits > 0 || totalWithdrawals > 0;
+                        double totalDeposits = transactionManager.calculateTotalDeposits(account.getAccountNumber());
+                        double totalWithdrawals = transactionManager.calculateTotalWithdrawals(account.getAccountNumber());
+                        boolean hasTransactions = totalDeposits > 0 || totalWithdrawals > 0;
 
-                    if (!hasTransactions) {
-                        System.out.println();
-                        transactionManager.viewTransactionsByAccount(account.getAccountNumber());
-                    } else {
-                        System.out.println("\nTRANSACTION HISTORY");
-                        transactionManager.viewTransactionsByAccount(account.getAccountNumber());
-
-                        double netChange = totalDeposits - totalWithdrawals;
-                        String sign;
-                        if (netChange >= 0) {
-                            sign = "+";
+                        if (!hasTransactions) {
+                            System.out.println();
+                            transactionManager.viewTransactionsByAccount(account.getAccountNumber());
                         } else {
-                            sign = "-";
+                            System.out.println("\nTRANSACTION HISTORY");
+                            transactionManager.viewTransactionsByAccount(account.getAccountNumber());
+
+                            double netChange = totalDeposits - totalWithdrawals;
+                            String sign;
+                            if (netChange >= 0) {
+                                sign = "+";
+                            } else {
+                                sign = "-";
+                            }
+                            System.out.println();
+                            System.out.println("Total Transactions: "
+                                    + transactionManager.getTransactionCountByAccount(account.getAccountNumber()));
+                            System.out.printf("Total Deposits: $%,.2f%n", totalDeposits);
+                            System.out.printf("Total Withdrawals: $%,.2f%n", totalWithdrawals);
+                            System.out.printf("Net Change: %s$%,.2f%n", sign, Math.abs(netChange));
                         }
-                        System.out.println();
-                        System.out.println("Total Transactions: "
-                                + transactionManager.getTransactionCountByAccount(account.getAccountNumber()));
-                        System.out.printf("Total Deposits: $%,.2f%n", totalDeposits);
-                        System.out.printf("Total Withdrawals: $%,.2f%n", totalWithdrawals);
-                        System.out.printf("Net Change: %s$%,.2f%n", sign, Math.abs(netChange));
+                    } catch (InvalidAccountException e) {
+                        System.out.println("\n❌ Error: " + e.getMessage());
                     }
 
                     System.out.print("\nPress Enter to continue... ");
