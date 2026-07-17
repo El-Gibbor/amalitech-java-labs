@@ -116,4 +116,17 @@ public class TransactionManager {
         }
         return count;
     }
+
+    /** @return the transactions belonging to the given account, newest first */
+    public Transaction[] getTransactionsForAccount(String accountNumber) {
+        Transaction[] result = new Transaction[getTransactionCountByAccount(accountNumber)];
+        int r = 0;
+        for (int i = transactionCount - 1; i >= 0; i--) {
+            if (transactions[i].getAccountNumber().equals(accountNumber)) {
+                result[r] = transactions[i];
+                r++;
+            }
+        }
+        return result;
+    }
 }
