@@ -1,8 +1,10 @@
+/** Stores and queries transactions for all accounts, backed by a fixed-size array. */
 public class TransactionManager {
     // Fixed capacity of 200; transactionCount marks how many slots are used and the next free index
     private Transaction[] transactions = new Transaction[200];
     private int transactionCount = 0;
 
+    /** @return true if the transaction was added, false if storage is full */
     public boolean addTransaction(Transaction transaction) {
         if (transactionCount < this.transactions.length) {
             this.transactions[transactionCount++] = transaction;
@@ -11,50 +13,60 @@ public class TransactionManager {
         return false;
     }
 
+    /** Prints the transaction history for the given account, newest first. */
     public void viewTransactionsByAccount(String accountNumber) {
-        int count = 0;
-        for (int i = 0; i < transactionCount; i++) {
-            if (transactions[i].getAccountNumber().equals(accountNumber)) {
-                count++;
-            }
-        }
-
+        int count = getTransactionCountByAccount(accountNumber);
         if (count == 0) {
-            String message = "No transactions recorded for this account.";
-            String line = "─".repeat(message.length());
-            System.out.println(line);
-            System.out.println(message);
-            System.out.println(line);
+            printNoTransactionsMessage();
             return;
         }
+        String[][] rows = buildTransactionRows(accountNumber, count);
+        printTransactionTable(rows);
+    }
 
-        String[] headers = {"TXN ID", "DATE/TIME", "TYPE", "AMOUNT", "BALANCE"};
-        int[] minWidths = {7, 19, 10, 11, 9};
-        String[][] rows = new String[count][headers.length];
+    private void printNoTransactionsMessage() {
+        String message = "No transactions recorded for this account.";
+        String line = "─".repeat(message.length());
+        System.out.println(line);
+        System.out.println(message);
+        System.out.println(line);
+    }
 
-        // walk backwards so the newest transaction fills the first row
+    // walk backwards so the newest transaction fills the first row
+    private String[][] buildTransactionRows(String accountNumber, int count) {
+        String[][] rows = new String[count][5];
         int r = 0;
         for (int i = transactionCount - 1; i >= 0; i--) {
             if (transactions[i].getAccountNumber().equals(accountNumber)) {
-                Transaction t = transactions[i];
-                String sign;
-                if (t.getType().equalsIgnoreCase("deposit")) {
-                    sign = "+";
-                } else {
-                    sign = "-";
-                }
-                rows[r][0] = t.getTransactionId();
-                rows[r][1] = t.getTimestamp();
-                rows[r][2] = t.getType().toUpperCase();
-                rows[r][3] = String.format("%s$%,.2f", sign, t.getAmount());
-                rows[r][4] = String.format("$%,.2f", t.getBalanceAfter());
+                rows[r] = formatTransactionRow(transactions[i]);
                 r++;
             }
         }
+        return rows;
+    }
 
-        int[] widths = columnWidths(headers, rows, minWidths);
-        String rowFormat = buildRowFormat(widths);
-        String divider = buildDivider(widths);
+    private String[] formatTransactionRow(Transaction t) {
+        String sign;
+        if (t.getType().equalsIgnoreCase("deposit")) {
+            sign = "+";
+        } else {
+            sign = "-";
+        }
+        return new String[] {
+                t.getTransactionId(),
+                t.getTimestamp(),
+                t.getType().toUpperCase(),
+                String.format("%s$%,.2f", sign, t.getAmount()),
+                String.format("$%,.2f", t.getBalanceAfter())
+        };
+    }
+
+    private void printTransactionTable(String[][] rows) {
+        String[] headers = {"TXN ID", "DATE/TIME", "TYPE", "AMOUNT", "BALANCE"};
+        int[] minWidths = {7, 19, 10, 11, 9};
+        int[] widths = TableFormatter.columnWidths(headers, rows, minWidths);
+        String rowFormat = TableFormatter.buildRowFormat(widths);
+        String divider = TableFormatter.buildDivider(widths);
 
         System.out.println(divider);
         System.out.printf(rowFormat, (Object[]) headers);
@@ -65,6 +77,7 @@ public class TransactionManager {
         System.out.println(divider);
     }
 
+    /** @return the total amount deposited into the given account */
     public double calculateTotalDeposits(String accountNumber) {
         double totalDeposits = 0;
         for (int i = 0; i < transactionCount; i++) {
@@ -76,6 +89,7 @@ public class TransactionManager {
         return totalDeposits;
     }
 
+    /** @return the total amount withdrawn from the given account */
     public double calculateTotalWithdrawals(String accountNumber) {
         double totalWithdrawals = 0;
         for (int i = 0; i < transactionCount; i++) {
@@ -87,11 +101,12 @@ public class TransactionManager {
         return totalWithdrawals;
     }
 
+    /** @return the total number of transactions recorded across all accounts */
     public int getTransactionCount() {
         return transactionCount;
     }
 
-    // Count how many recorded transactions belong to a single account
+    /** @return the number of recorded transactions belonging to the given account */
     public int getTransactionCountByAccount(String accountNumber) {
         int count = 0;
         for (int i = 0; i < transactionCount; i++) {
@@ -100,42 +115,5 @@ public class TransactionManager {
             }
         }
         return count;
-    }
-
-    // Column width = the larger of its minimum and the widest cell (header or any row)
-    private static int[] columnWidths(String[] headers, String[][] rows, int[] minWidths) {
-        int[] widths = new int[headers.length];
-        for (int c = 0; c < headers.length; c++) {
-            widths[c] = Math.max(minWidths[c], headers[c].length());
-            for (String[] row : rows) {
-                if (row[c].length() > widths[c]) {
-                    widths[c] = row[c].length();
-                }
-            }
-        }
-        return widths;
-    }
-
-    // Builds a left-justified printf format such as "%-7s | %-19s | ... %n"
-    private static String buildRowFormat(int[] widths) {
-        StringBuilder format = new StringBuilder();
-        for (int c = 0; c < widths.length; c++) {
-            if (c > 0) {
-                format.append(" | ");
-            }
-            format.append("%-").append(widths[c]).append("s");
-        }
-        format.append("%n");
-        return format.toString();
-    }
-
-    // A horizontal rule as wide as the whole table (columns plus the " | " separators)
-    private static String buildDivider(int[] widths) {
-        int total = 0;
-        for (int width : widths) {
-            total += width;
-        }
-        total += 3 * (widths.length - 1);
-        return "─".repeat(total);
     }
 }

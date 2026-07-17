@@ -1,8 +1,10 @@
+/** Stores accounts and provides lookup, listing, and aggregate queries over them. */
 public class AccountManager {
     // Fixed capacity of 50; accountCount marks how many slots are used and the next free index
     private Account[] accounts = new Account[50];
     private int accountCount = 0;
 
+    /** @return true if the account was added, false if storage is full */
     public boolean addAccount(Account account) {
         if (accountCount < this.accounts.length) {
             this.accounts[accountCount++] = account;
@@ -12,6 +14,7 @@ public class AccountManager {
     }
 
     // Linear search over the used portion; returns null when no account matches
+    /** @return the account with the given account number, or null if none matches */
     public Account findAccount(String accountNumber) {
         for (int i = 0; i < accountCount; i++) {
             if (accounts[i].getAccountNumber().equals(accountNumber)) {
@@ -21,29 +24,40 @@ public class AccountManager {
         return null;
     }
 
+    /** Prints a formatted listing of every stored account. */
     public void viewAllAccounts() {
         if (accountCount == 0) {
             System.out.println("No accounts available.");
             return;
         }
+        String[][] rows = buildAccountRows();
+        printAccountTable(rows);
+    }
 
+    private String[][] buildAccountRows() {
+        String[][] rows = new String[accountCount][5];
+        for (int i = 0; i < accountCount; i++) {
+            rows[i] = formatAccountRow(accounts[i]);
+        }
+        return rows;
+    }
+
+    private String[] formatAccountRow(Account a) {
+        return new String[] {
+                a.getAccountNumber(),
+                a.getCustomer().getName(),
+                a.getAccountType(),
+                String.format("$%,.2f", a.getBalance()),
+                a.getStatus()
+        };
+    }
+
+    private void printAccountTable(String[][] rows) {
         String[] headers = {"ACC NO", "CUSTOMER NAME", "TYPE", "BALANCE", "STATUS"};
         int[] minWidths = {8, 17, 17, 12, 6};
-
-        // Collect each row's cell text so columns can be sized to fit the content
-        String[][] rows = new String[accountCount][headers.length];
-        for (int i = 0; i < accountCount; i++) {
-            Account a = accounts[i];
-            rows[i][0] = a.getAccountNumber();
-            rows[i][1] = a.getCustomer().getName();
-            rows[i][2] = a.getAccountType();
-            rows[i][3] = String.format("$%,.2f", a.getBalance());
-            rows[i][4] = a.getStatus();
-        }
-
-        int[] widths = columnWidths(headers, rows, minWidths);
-        String rowFormat = buildRowFormat(widths);
-        String divider = buildDivider(widths);
+        int[] widths = TableFormatter.columnWidths(headers, rows, minWidths);
+        String rowFormat = TableFormatter.buildRowFormat(widths);
+        String divider = TableFormatter.buildDivider(widths);
 
         System.out.println("\nACCOUNT LISTING");
         System.out.println(divider);
@@ -56,6 +70,7 @@ public class AccountManager {
         }
     }
 
+    /** @return the sum of every stored account's balance */
     public double getTotalBalance() {
         double totalBalance = 0;
         for (int i = 0; i < accountCount; i++) {
@@ -64,44 +79,8 @@ public class AccountManager {
         return totalBalance;
     }
 
+    /** @return the number of accounts currently stored */
     public int getAccountCount() {
         return accountCount;
-    }
-
-    // Column width = the larger of its minimum and the widest cell (header or any row)
-    private static int[] columnWidths(String[] headers, String[][] rows, int[] minWidths) {
-        int[] widths = new int[headers.length];
-        for (int c = 0; c < headers.length; c++) {
-            widths[c] = Math.max(minWidths[c], headers[c].length());
-            for (String[] row : rows) {
-                if (row[c].length() > widths[c]) {
-                    widths[c] = row[c].length();
-                }
-            }
-        }
-        return widths;
-    }
-
-    // Builds a left-justified printf format such as "%-8s | %-17s | ... %n"
-    private static String buildRowFormat(int[] widths) {
-        StringBuilder format = new StringBuilder();
-        for (int c = 0; c < widths.length; c++) {
-            if (c > 0) {
-                format.append(" | ");
-            }
-            format.append("%-").append(widths[c]).append("s");
-        }
-        format.append("%n");
-        return format.toString();
-    }
-
-    // A horizontal rule as wide as the whole table (columns plus the " | " separators)
-    private static String buildDivider(int[] widths) {
-        int total = 0;
-        for (int width : widths) {
-            total += width;
-        }
-        total += 3 * (widths.length - 1);
-        return "─".repeat(total);
     }
 }
