@@ -55,30 +55,41 @@ public abstract class Account implements Transactable {
     // Subclass prints its own type-specific summary sub-line for the listing table
     protected abstract void displayTypeSummaryLine();
 
-    public boolean deposit(double amount) {
+    /**
+     * @throws InvalidAmountException if amount is not greater than zero
+     */
+    public void deposit(double amount) throws InvalidAmountException {
         if (amount <= 0) {
-            return false;
+            throw new InvalidAmountException("Deposit amount must be greater than 0.");
         }
         setBalance(getBalance() + amount);
-        return true;
     }
 
-    public boolean withdraw(double amount) {
-        if (amount <= 0 || amount > getBalance()) {
-            return false;
+    /**
+     * @throws InvalidAmountException if amount is not greater than zero
+     * @throws InsufficientFundsException if amount exceeds the current balance
+     * @throws OverdraftExceededException reserved for subclasses that allow overdraft
+     */
+    public void withdraw(double amount)
+            throws InvalidAmountException, InsufficientFundsException, OverdraftExceededException {
+        if (amount <= 0) {
+            throw new InvalidAmountException("Withdrawal amount must be greater than 0.");
+        }
+        if (amount > getBalance()) {
+            throw new InsufficientFundsException(
+                    "Insufficient funds. Current balance: " + getBalance());
         }
         setBalance(getBalance() - amount);
-        return true;
     }
 
     // Implements transaction contract
     @Override
-    public boolean processTransaction(double amount, String type) {
+    public void processTransaction(double amount, String type)
+            throws InvalidAmountException, InsufficientFundsException, OverdraftExceededException {
         if ("deposit".equalsIgnoreCase(type)) {
-            return deposit(amount);
+            deposit(amount);
         } else if ("withdrawal".equalsIgnoreCase(type)) {
-            return withdraw(amount);
+            withdraw(amount);
         }
-        return false;
     }
 }

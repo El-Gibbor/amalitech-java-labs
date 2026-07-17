@@ -34,14 +34,20 @@ public class CheckingAccount extends Account {
                 overdraftLimit, monthlyFee);
     }
 
-    // Override to allow overdraft, unlike SavingsAccount
+    /**
+     * @throws InvalidAmountException if amount is not greater than zero
+     * @throws OverdraftExceededException if amount exceeds the balance plus the overdraft limit
+     */
     @Override
-    public boolean withdraw(double amount) {
-        if (amount <= 0 || amount > (getBalance() + overdraftLimit)) {
-            return false;
+    public void withdraw(double amount) throws InvalidAmountException, OverdraftExceededException {
+        if (amount <= 0) {
+            throw new InvalidAmountException("Withdrawal amount must be greater than 0.");
+        }
+        if (amount > getBalance() + overdraftLimit) {
+            throw new OverdraftExceededException(
+                    "Overdraft limit exceeded. Available to withdraw: " + (getBalance() + overdraftLimit));
         }
         setBalance(getBalance() - amount);
-        return true;
     }
 
     public double applyMonthlyFee() {

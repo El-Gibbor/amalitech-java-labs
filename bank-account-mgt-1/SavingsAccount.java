@@ -30,13 +30,21 @@ public class SavingsAccount extends Account {
                 interestRate * 100, minimumBalance);
     }
 
-    // reject if min balance is not met, then let Account do the subtraction
+    /**
+     * @throws InvalidAmountException if amount is not greater than zero
+     * @throws InsufficientFundsException if amount would breach the minimum balance, or
+     *         otherwise exceeds the current balance
+     * @throws OverdraftExceededException never thrown here; declared only because
+     *         super.withdraw's signature reserves it
+     */
     @Override
-    public boolean withdraw(double amount) {
+    public void withdraw(double amount)
+            throws InvalidAmountException, InsufficientFundsException, OverdraftExceededException {
         if (getBalance() - amount < minimumBalance) {
-            return false;
+            throw new InsufficientFundsException(
+                    "Insufficient funds. Withdrawal would breach the minimum balance of " + minimumBalance);
         }
-        return super.withdraw(amount);
+        super.withdraw(amount);
     }
 
     public double calculateInterest() {

@@ -11,14 +11,17 @@ public class AccountManager {
         return false;
     }
 
-    // Linear search over the used portion; returns null when no account matches
-    public Account findAccount(String accountNumber) {
+    // Linear search over the used portion
+    /**
+     * @throws InvalidAccountException if no account matches accountNumber
+     */
+    public Account findAccount(String accountNumber) throws InvalidAccountException {
         for (int i = 0; i < accountCount; i++) {
             if (accounts[i].getAccountNumber().equals(accountNumber)) {
                 return accounts[i];
             }
         }
-        return null;
+        throw new InvalidAccountException("Account not found: " + accountNumber);
     }
 
     public void viewAllAccounts() {
