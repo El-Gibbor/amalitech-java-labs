@@ -1,3 +1,9 @@
+package models;
+
+import models.exceptions.InsufficientFundsException;
+import models.exceptions.InvalidAmountException;
+import models.exceptions.OverdraftExceededException;
+
 public interface Transactable {
     /**
      * @throws InvalidAmountException if amount is not greater than zero

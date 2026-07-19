@@ -1,3 +1,9 @@
+package services;
+
+import models.Account;
+import models.exceptions.InvalidAccountException;
+import utils.TableFormatter;
+
 /** Stores accounts and provides lookup, listing, and aggregate queries over them. */
 public class AccountManager {
     // Fixed capacity of 50; accountCount marks how many slots are used and the next free index

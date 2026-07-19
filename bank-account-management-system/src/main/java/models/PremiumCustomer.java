@@ -1,3 +1,5 @@
+package models;
+
 /**
  * A premium customer with enhanced benefits: a required minimum balance
  * and waived monthly fees.

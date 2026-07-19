@@ -1,3 +1,9 @@
+package services;
+
+import models.Account;
+import models.Transaction;
+import utils.TableFormatter;
+
 /**
  * Builds and prints an account statement, combining an account's current
  * state with its transaction history from a {@link TransactionManager}.

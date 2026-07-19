@@ -1,3 +1,8 @@
+package services;
+
+import models.Transaction;
+import utils.TableFormatter;
+
 /** Stores and queries transactions for all accounts, backed by a fixed-size array. */
 public class TransactionManager {
     // Fixed capacity of 200; transactionCount marks how many slots are used and the next free index

@@ -1,10 +1,12 @@
+package utils;
+
 /** Static helpers for rendering left-justified console tables with dividers. */
-final class TableFormatter {
+public final class TableFormatter {
     private TableFormatter() {
     }
 
     /** @return each column's width: the larger of its minimum and its widest cell */
-    static int[] columnWidths(String[] headers, String[][] rows, int[] minWidths) {
+    public static int[] columnWidths(String[] headers, String[][] rows, int[] minWidths) {
         int[] widths = new int[headers.length];
         for (int c = 0; c < headers.length; c++) {
             widths[c] = Math.max(minWidths[c], headers[c].length());
@@ -18,7 +20,7 @@ final class TableFormatter {
     }
 
     /** @return a left-justified printf format string, e.g. "%-8s | %-17s | ...%n" */
-    static String buildRowFormat(int[] widths) {
+    public static String buildRowFormat(int[] widths) {
         StringBuilder format = new StringBuilder();
         for (int c = 0; c < widths.length; c++) {
             if (c > 0) {
@@ -31,7 +33,7 @@ final class TableFormatter {
     }
 
     /** @return a horizontal rule as wide as the whole table, columns plus " | " separators */
-    static String buildDivider(int[] widths) {
+    public static String buildDivider(int[] widths) {
         int total = 0;
         for (int width : widths) {
             total += width;

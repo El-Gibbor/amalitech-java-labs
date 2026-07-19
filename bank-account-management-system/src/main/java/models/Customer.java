@@ -1,3 +1,5 @@
+package models;
+
 /**
  * Abstract base identity type shared by {@code RegularCustomer} and
  * {@code PremiumCustomer}, holding personal details and an auto-generated

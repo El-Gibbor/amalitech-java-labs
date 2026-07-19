@@ -1,3 +1,9 @@
+package models;
+
+import models.exceptions.InsufficientFundsException;
+import models.exceptions.InvalidAmountException;
+import models.exceptions.OverdraftExceededException;
+
 /** Base type for all bank accounts owned by a {@link Customer}. */
 public abstract class Account implements Transactable {
     private String accountNumber;
@@ -59,7 +65,7 @@ public abstract class Account implements Transactable {
     public abstract String getAccountType();
 
     /** Prints this account's type-specific summary line in the listing table. */
-    protected abstract void displayTypeSummaryLine();
+    public abstract void displayTypeSummaryLine();
 
     /** Shared validation for {@link #deposit(double)} and {@link #withdraw(double)}. */
     protected boolean isValidAmount(double amount) {

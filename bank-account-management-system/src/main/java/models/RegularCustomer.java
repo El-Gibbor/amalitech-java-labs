@@ -1,3 +1,5 @@
+package models;
+
 /** Standard customer type with no benefits beyond the Customer defaults. */
 public class RegularCustomer extends Customer {
     /** Creates a regular customer. */

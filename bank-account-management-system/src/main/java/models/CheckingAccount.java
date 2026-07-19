@@ -1,3 +1,8 @@
+package models;
+
+import models.exceptions.InvalidAmountException;
+import models.exceptions.OverdraftExceededException;
+
 /**
  * A checking account with no interest, an overdraft allowance up to a limit,
  * and a monthly fee that is waived for customers with waived fees.
@@ -34,7 +39,7 @@ public class CheckingAccount extends Account {
     }
 
     @Override
-    protected void displayTypeSummaryLine() {
+    public void displayTypeSummaryLine() {
         System.out.printf("         | Overdraft Limit: $%,.2f | Monthly Fee: $%,.2f%n",
                 overdraftLimit, monthlyFee);
     }

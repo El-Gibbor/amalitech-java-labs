@@ -1,5 +1,20 @@
 import java.util.Scanner;
 
+import models.Account;
+import models.CheckingAccount;
+import models.Customer;
+import models.PremiumCustomer;
+import models.RegularCustomer;
+import models.SavingsAccount;
+import models.Transaction;
+import models.exceptions.InsufficientFundsException;
+import models.exceptions.InvalidAccountException;
+import models.exceptions.InvalidAmountException;
+import models.exceptions.OverdraftExceededException;
+import services.AccountManager;
+import services.StatementGenerator;
+import services.TransactionManager;
+
 public class Main {
     public static void main(String[] args) {
         AccountManager accountManager = new AccountManager();

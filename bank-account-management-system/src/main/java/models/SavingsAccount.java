@@ -1,3 +1,9 @@
+package models;
+
+import models.exceptions.InsufficientFundsException;
+import models.exceptions.InvalidAmountException;
+import models.exceptions.OverdraftExceededException;
+
 /**
  * A savings account that earns interest and enforces a minimum balance
  * below which withdrawals are refused.
@@ -30,7 +36,7 @@ public class SavingsAccount extends Account {
     }
 
     @Override
-    protected void displayTypeSummaryLine() {
+    public void displayTypeSummaryLine() {
         System.out.printf("         | Interest Rate: %.1f%% | Min Balance: $%,.2f%n",
                 interestRate * 100, minimumBalance);
     }
