@@ -5,8 +5,11 @@
 | **Create Account** | Register a new account for a Regular or Premium customer |
 | **View Accounts** | List all accounts with balances, plus total accounts and total bank balance |
 | **Process Transaction** | Deposit or withdraw money, with a confirmation step before finalizing |
-| **View Transaction History** | Show an account's transactions (newest first) with deposit/withdrawal/net-change totals |
-| **Menu Navigation** | Simple looping menu that keeps running until the user exits |
+| **Transfer Between Accounts** | Move a balance from one account to another, under the same validation as a standalone withdrawal and deposit |
+| **View Transaction History** | Show an account's transactions (newest first) with total deposits, total withdrawals, and net change |
+| **Generate Account Statement** | A shorter, statement-style summary of an account's transactions and net change |
+| **Run Tests** | Execute the JUnit 5 test suite from within the running application and report how many tests passed and how many failed |
+| **Menu Navigation** | Looping menu, organized into Manage Accounts and Perform Transactions submenus, that keeps running until the user exits |
 
 The application starts with five seeded demo accounts (3 Savings, 2 Checking)
 so the listing has data on first launch.
@@ -27,32 +30,50 @@ so the listing has data on first launch.
 
 ---
 
+## Exception Handling
+
+Invalid conditions are reported through four custom checked exceptions rather than boolean
+return values or silent failures. Each is caught in `Main` and displayed as a clear console
+message instead of crashing the application.
+
+| Exception | Thrown when |
+|---|---|
+| `InvalidAmountException` | A deposit, withdrawal, or transfer amount is not greater than zero |
+| `InsufficientFundsException` | A withdrawal would exceed the balance, or (for a savings account) breach the $500 minimum balance |
+| `OverdraftExceededException` | A checking account withdrawal would exceed the $1,000 overdraft limit |
+| `InvalidAccountException` | An account number does not match any stored account, including a transfer whose source and destination are the same account |
+
+---
+
 ## Project Structure
 
-All classes live in a single package (flat directory).
+```
+bank-account-management-system/
+├── pom.xml
+├── docs/
+│   └── git-workflow.md
+├── src/
+│   ├── main/java/
+│   │   ├── Main.java
+│   │   ├── models/                  Account, Customer hierarchies, Transaction, Transactable
+│   │   │   └── exceptions/          The four custom exceptions
+│   │   ├── services/                AccountManager, TransactionManager, StatementGenerator
+│   │   └── utils/                   TableFormatter
+│   └── test/java/                   Mirrors the package layout above
+│       ├── models/AccountTest.java
+│       ├── models/exceptions/ExceptionTest.java
+│       └── services/TransactionManagerTest.java
+```
 
-| Class | Role |
-|---|---|
-| `Account` (abstract) | Base account: number, customer, balance, status, deposit/withdraw; implements `Transactable` |
-| `SavingsAccount` | Adds interest rate and minimum-balance rule on withdrawals |
-| `CheckingAccount` | Adds overdraft limit and monthly fee (waived for Premium) |
-| `Customer` (abstract) | Base customer: id, name, age, contact, address |
-| `RegularCustomer` | Standard customer |
-| `PremiumCustomer` | Premium customer with waived fees |
-| `Transactable` (interface) | Contract for `processTransaction(amount, type)` |
-| `Transaction` | Immutable record of one deposit/withdrawal with auto-generated ID and timestamp |
-| `AccountManager` | Holds accounts in an array; add, linear-search find, list, totals |
-| `TransactionManager` | Holds transactions in an array; add, per-account view and totals |
-| `Main` | Console menu and program flow |
-
-Unique IDs are generated with static counters: accounts as `ACC001`,
-customers as `CUS001`, and transactions as `TXN001`.
+Unique IDs are generated with static counters: accounts as `ACC001`, customers as `CUS001`,
+and transactions as `TXN001`.
 
 ---
 
 ## Requirements
 
-- Java Development Kit (JDK) 11 or later (`String.repeat` is used).
+- Java Development Kit (JDK) 11 or later
+- Apache Maven 3.6 or later
 
 ---
 
@@ -65,32 +86,73 @@ environment to display correctly.
 > characters as `?????` regardless of code page or JVM flags. Use one of the
 > supported options below instead.
 
-### Recommended: run from your IDE
+### Run the test suite
 
-The simplest way, with no encoding flags needed:
+```bash
+mvn test
+```
 
-- **IntelliJ IDEA**: open the project, open `Main.java`, and click the
-  **Run** button (▶)
-- **VS Code** (with the Java Extension Pack): open `Main.java` and click
-  **Run** abutton (▶)
+Compiles both `src/main/java` and `src/test/java`, then runs all 22 tests across
+`AccountTest`, `TransactionManagerTest`, and `ExceptionTest`, printing a summary of how many
+passed and how many failed.
 
-Both compile and run with UTF-8 automatically.
+### Recommended: run the application from your IDE
 
-### Command line: Git Bash or a Unix-like shell
+- **IntelliJ IDEA**: open the project (IntelliJ detects `pom.xml` automatically), open
+  `Main.java`, and click the **Run** button (▶)
+- **VS Code** (with the Java Extension Pack): open the folder and click **Run** above
+  `public static void main`
 
-Use **Git Bash** on Windows, or any Linux/macOS terminal (Ubuntu, WSL, etc.).
+Both resolve dependencies and compile with UTF-8 automatically. If option 4, "Run Tests," in
+the console menu reports `ClassNotFoundException` for a test class, run `mvn test` once first
+(or build the project once via the IDE's own Maven integration) so the compiled test classes
+exist alongside the main ones; the IDE's own run configuration needs both on its classpath, not
+only the main sources.
+
+### Command line, without an IDE
+
 From this directory:
 
 ```bash
-# Compile with UTF-8
-javac -encoding UTF-8 *.java
+# Compile main and test sources
+mvn test-compile
 
-# Run with UTF-8 output
-java -Dfile.encoding=UTF-8 Main
+# Build a classpath string containing every dependency
+mvn -q dependency:build-classpath -Dmdep.outputFile=cp.txt
+
+# Run, with both compiled outputs and the dependencies on the classpath
+java -cp "target/classes:target/test-classes:$(cat cp.txt)" Main
 ```
 
-These terminals display UTF-8 correctly, so the menu and tables render as
-intended.
+(On Windows, without Git Bash, replace the `:` separators in `-cp` with `;`.)
+
+---
+
+## Testing
+
+The JUnit 5 suite covers valid and invalid cases for `deposit`, `withdraw`, and `transfer`,
+including that each custom exception is thrown under the correct condition, plus
+`TransactionManager`'s recording and per-account querying of transactions.
+
+| Test class | Covers |
+|---|---|
+| `AccountTest` | `Account.deposit` and `Account.withdraw`, and `AccountManager.transfer`, valid and invalid cases, for both account types |
+| `TransactionManagerTest` | Recording transactions, filtering and summing them by account and type, newest-first ordering |
+| `ExceptionTest` | The four custom exception classes' own contract, plus exception conditions not otherwise covered |
+
+Run them with `mvn test`, or from within the running application via menu option 4, "Run
+Tests," which executes the same suite through the JUnit Platform Launcher and prints a
+per-test result line followed by a summary.
+
+---
+
+## Git Workflow
+
+Phase Two was built across four branches (`feature/refactor`, `feature/exceptions`,
+`feature/testing`, off `main`), including a deliberate `git cherry-pick` of the refactor
+branch's commits into the exceptions branch, with real conflicts resolved by hand. See
+[`docs/git-workflow.md`](docs/git-workflow.md) for the full branch history, the cherry-pick
+commands used, and the reasoning behind each conflict resolution.
 
 ---
 
@@ -99,23 +161,30 @@ intended.
 At the main menu, enter the number of the option you want:
 
 ```
-1. Create Account
-2. View All Accounts
-3. Process Transaction
-4. View Transactions history
+1. Manage Accounts
+2. Perform Transactions
+3. Generate Account Statements
+4. Run Tests
 5. Exit
 ```
 
-- **Create Account**: enter the customer's name, age, contact, and address,
-  then choose the customer type (Regular/Premium), account type
-  (Savings/Checking), and an initial deposit.
-- **Process Transaction**: enter an account number, choose Deposit or
-  Withdrawal, enter an amount, then confirm with `Y` to finalize (or `N` to
+- **Manage Accounts**, then **Create Account**: enter the customer's name, age, contact, and
+  address, then choose the customer type (Regular or Premium), account type
+  (Savings or Checking), and an initial deposit.
+- **Manage Accounts**, then **View All Accounts**: list every account with its balance and
+  type-specific details.
+- **Perform Transactions**, then **Process Transaction**: enter an account number, choose
+  Deposit or Withdrawal, enter an amount, then confirm with `Y` to finalize (or `N` to
   cancel; a cancelled transaction leaves the balance unchanged).
-- **View Transaction History**: enter an account number to see its
-  transactions and summary totals.
+- **Perform Transactions**, then **View Transaction History**: enter an account number to see
+  its transactions and summary totals.
+- **Generate Account Statements**: enter an account number for a shorter, totals-focused
+  summary of its transactions.
+- **Run Tests**: executes the JUnit 5 suite and prints each test's result, followed by a
+  summary of how many passed and how many failed.
 
-Invalid input is handled gracefully: non-numeric menu choices and amounts are
-rejected and re-prompted instead of crashing, amounts must be greater than
-zero, savings withdrawals cannot breach the $500 minimum balance, and checking
-withdrawals cannot exceed the overdraft limit.
+Invalid input is handled gracefully: non-numeric menu choices and amounts are rejected and
+re-prompted instead of crashing, and business-rule violations (a non-positive amount, an
+unknown account number, a savings withdrawal breaching the $500 minimum, a checking
+withdrawal exceeding the overdraft limit) are reported as clear error messages rather than
+crashing the application.

@@ -8,9 +8,11 @@ with basic data-structure and search logic using arrays.
 Built across three lab phases, each building
 on the last:
 
-- **Phase I: Java Basics & OOP** (implemented)
-- **Phase II: Clean Code, Git & Testing** (planned)
+- **Phase I: Java Basics and OOP** (implemented)
+- **Phase II: Clean Code, Git, and Testing** (implemented, on `feature/testing`, pending final merge to `main`)
 - **Phase III: Advanced Java** (Collections, Streams, File I/O, Concurrency) (planned)
 
-Phase I lives in [`bank-account-mgt-1/`](bank-account-mgt-1/). See its
-[README](bank-account-mgt-1/README.md) for features, setup, and how to run.
+The project lives in [`bank-account-management-system/`](bank-account-management-system/). See
+its [README](bank-account-management-system/README.md) for features, setup, and how to run, and
+[`docs/git-workflow.md`](bank-account-management-system/docs/git-workflow.md) for the branch and
+cherry-pick history behind Phase Two.
