@@ -1,7 +1,10 @@
 package services;
 
 import models.Account;
+import models.exceptions.InsufficientFundsException;
 import models.exceptions.InvalidAccountException;
+import models.exceptions.InvalidAmountException;
+import models.exceptions.OverdraftExceededException;
 import utils.TableFormatter;
 
 /** Stores accounts and provides lookup, listing, and aggregate queries over them. */
@@ -30,6 +33,36 @@ public class AccountManager {
             }
         }
         throw new InvalidAccountException("Account not found: " + accountNumber);
+    }
+
+    /**
+     * Moves {@code amount} from the account identified by {@code fromAccountNumber} to the
+     * account identified by {@code toAccountNumber}, subject to the same validation each
+     * account already applies to a standalone {@link Account#withdraw(double)} and
+     * {@link Account#deposit(double)}.
+     *
+     * @throws InvalidAccountException if either account number does not match a stored
+     *         account, or if the two account numbers are the same
+     * @throws InvalidAmountException if amount is not greater than zero
+     * @throws InsufficientFundsException if the source account has insufficient funds, or
+     *         (for a savings account) the withdrawal would breach its minimum balance
+     * @throws OverdraftExceededException if the source account's overdraft limit would be
+     *         exceeded
+     */
+    public void transfer(String fromAccountNumber, String toAccountNumber, double amount)
+            throws InvalidAccountException, InvalidAmountException, InsufficientFundsException,
+            OverdraftExceededException {
+        if (fromAccountNumber.equals(toAccountNumber)) {
+            throw new InvalidAccountException("Cannot transfer to the same account: " + fromAccountNumber);
+        }
+
+        Account fromAccount = findAccount(fromAccountNumber);
+        Account toAccount = findAccount(toAccountNumber);
+
+        // withdraw() only returns normally once amount has passed isValidAmount, so the
+        // deposit() below is guaranteed not to fail validation in turn.
+        fromAccount.withdraw(amount);
+        toAccount.deposit(amount);
     }
 
     /** Prints a formatted listing of every stored account. */
