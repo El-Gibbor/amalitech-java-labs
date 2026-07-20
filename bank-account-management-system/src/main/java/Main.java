@@ -1,5 +1,16 @@
 import java.util.Scanner;
 
+import org.junit.platform.engine.TestExecutionResult;
+import org.junit.platform.engine.discovery.DiscoverySelectors;
+import org.junit.platform.launcher.Launcher;
+import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestIdentifier;
+import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
+import org.junit.platform.launcher.core.LauncherFactory;
+import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
+import org.junit.platform.launcher.listeners.TestExecutionSummary;
+
 import models.Account;
 import models.CheckingAccount;
 import models.Customer;
@@ -328,13 +339,53 @@ public class Main {
         scanner.nextLine();
     }
 
-    // Placeholder until Sub-phase Four wires up real JUnit test execution
     private static void runTests(Scanner scanner) {
         System.out.println("\nRUN TESTS");
         System.out.println("─────────────────────────────────────────────\n");
-        System.out.println("JUnit tests are not yet available. This will be implemented in Sub-phase Four.");
+        System.out.println("Running tests with JUnit...\n");
+
+        LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+                .selectors(
+                        DiscoverySelectors.selectClass("models.AccountTest"),
+                        DiscoverySelectors.selectClass("services.TransactionManagerTest"),
+                        DiscoverySelectors.selectClass("models.exceptions.ExceptionTest"))
+                .build();
+
+        Launcher launcher = LauncherFactory.create();
+        SummaryGeneratingListener summaryListener = new SummaryGeneratingListener();
+        launcher.registerTestExecutionListeners(new ConsoleTestListener(), summaryListener);
+        launcher.execute(request);
+
+        TestExecutionSummary summary = summaryListener.getSummary();
+        long totalTests = summary.getTestsFoundCount();
+        long passedTests = summary.getTestsSucceededCount();
+
+        System.out.println();
+        if (passedTests == totalTests) {
+            System.out.println("[OK] All " + totalTests + " tests passed successfully!");
+        } else {
+            System.out.println("❌ " + passedTests + " of " + totalTests + " tests passed.");
+        }
+
         System.out.print("\nPress Enter to continue... ");
         scanner.nextLine();
+    }
+
+    // Prints one line per test method as it finishes, matching the console's PASSED/FAILED format
+    private static class ConsoleTestListener implements TestExecutionListener {
+        @Override
+        public void executionFinished(TestIdentifier testIdentifier, TestExecutionResult result) {
+            if (!testIdentifier.isTest()) {
+                return; // skip containers (classes, the engine itself); only report leaf test methods
+            }
+            String outcome;
+            if (result.getStatus() == TestExecutionResult.Status.SUCCESSFUL) {
+                outcome = "PASSED";
+            } else {
+                outcome = "FAILED";
+            }
+            System.out.println("Test: " + testIdentifier.getDisplayName() + " .......... " + outcome);
+        }
     }
 
     // re-prompts until the input is a valid integer (no crash on letters)
