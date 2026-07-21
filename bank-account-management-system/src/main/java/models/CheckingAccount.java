@@ -1,13 +1,23 @@
+package models;
+
+import models.exceptions.InvalidAmountException;
+import models.exceptions.OverdraftExceededException;
+
+/**
+ * A checking account with no interest, an overdraft allowance up to a limit,
+ * and a monthly fee that is waived for customers with waived fees.
+ */
 public class CheckingAccount extends Account {
     private double overdraftLimit;
     private double monthlyFee;
 
+    /** Creates a checking account with the standard overdraft limit and monthly fee. */
     public CheckingAccount(Customer customer, double balance) {
         super(customer, balance);
         this.overdraftLimit = 1000;
         this.monthlyFee = 10;
     }
- 
+
     @Override
     public void displayAccountDetails() {
         System.out.println("  Account Number: " + getAccountNumber());
@@ -29,24 +39,35 @@ public class CheckingAccount extends Account {
     }
 
     @Override
-    protected void displayTypeSummaryLine() {
+    public void displayTypeSummaryLine() {
         System.out.printf("         | Overdraft Limit: $%,.2f | Monthly Fee: $%,.2f%n",
                 overdraftLimit, monthlyFee);
     }
 
-    // Override to allow overdraft, unlike SavingsAccount
+    /**
+     * @throws InvalidAmountException if amount is not greater than zero
+     * @throws OverdraftExceededException if amount exceeds the balance plus the overdraft limit
+     */
     @Override
-    public boolean withdraw(double amount) {
-        if (amount <= 0 || amount > (getBalance() + overdraftLimit)) {
-            return false;
+    public void withdraw(double amount) throws InvalidAmountException, OverdraftExceededException {
+        if (!isValidAmount(amount)) {
+            throw new InvalidAmountException("Withdrawal amount must be greater than 0.");
+        }
+        if (exceedsOverdraftLimit(amount)) {
+            throw new OverdraftExceededException(
+                    "Overdraft limit exceeded. Available to withdraw: " + (getBalance() + overdraftLimit));
         }
         setBalance(getBalance() - amount);
-        return true;
     }
 
+    private boolean exceedsOverdraftLimit(double amount) {
+        return amount > getBalance() + overdraftLimit;
+    }
+
+    /** @return the monthly fee charged, or 0 if waived for this customer */
     public double applyMonthlyFee() {
         if (getCustomer().hasWaivedFees()) {
-            return 0; // No fee for premium customers
+            return 0;
         }
         setBalance(getBalance() - monthlyFee);
         return monthlyFee;
