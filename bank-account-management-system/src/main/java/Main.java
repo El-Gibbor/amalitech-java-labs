@@ -176,19 +176,23 @@ public class Main {
         while (inSubmenu) {
             System.out.println("\nPERFORM TRANSACTIONS");
             System.out.println("1. Process Transaction");
-            System.out.println("2. View Transaction History");
-            System.out.println("3. Back to Main Menu\n");
+            System.out.println("2. Apply Interest (Savings Only)");
+            System.out.println("3. View Transaction History");
+            System.out.println("4. Back to Main Menu\n");
 
-            int choice = readIntInRange(scanner, "Enter your choice: ", 1, 3);
+            int choice = readIntInRange(scanner, "Enter your choice: ", 1, 4);
 
             switch (choice) {
                 case 1:
                     processTransaction(scanner, accountManager, transactionManager);
                     break;
                 case 2:
-                    viewTransactionHistory(scanner, accountManager, transactionManager);
+                    applyInterest(scanner, accountManager, transactionManager);
                     break;
                 case 3:
+                    viewTransactionHistory(scanner, accountManager, transactionManager);
+                    break;
+                case 4:
                     inSubmenu = false;
                     break;
             }
@@ -271,6 +275,58 @@ public class Main {
         scanner.nextLine();
     }
 
+    private static void applyInterest(Scanner scanner, AccountManager accountManager,
+            TransactionManager transactionManager) {
+        System.out.println("\nAPPLY INTEREST");
+        System.out.println("─────────────────────────────────────────────\n");
+
+        System.out.print("Enter Account Number: ");
+        String accountNumber = scanner.nextLine();
+
+        try {
+            Account account = accountManager.findAccount(accountNumber);
+
+            if (!(account instanceof SavingsAccount)) {
+                System.out.println("\n❌ Error: Interest can only be applied to Savings accounts.");
+            } else {
+                SavingsAccount savingsAccount = (SavingsAccount) account;
+                double interest = savingsAccount.calculateInterest();
+
+                if (interest <= 0) {
+                    System.out.println("\nNo interest to apply for this account.");
+                } else {
+                    System.out.printf("%nCurrent Balance: $%,.2f%n", savingsAccount.getBalance());
+                    System.out.printf("Interest to Apply: $%,.2f%n", interest);
+
+                    System.out.print("\nConfirm applying interest? (Y/N): ");
+                    String confirm = scanner.nextLine();
+
+                    if (confirm.equalsIgnoreCase("Y")) {
+                        savingsAccount.deposit(interest);
+                        double newBalance = savingsAccount.getBalance();
+
+                        Transaction transaction = new Transaction(
+                                savingsAccount.getAccountNumber(), "Interest", interest, newBalance);
+                        transactionManager.addTransaction(transaction);
+
+                        System.out.println("\n[OK] Interest applied successfully!");
+                        System.out.printf("New Balance: $%,.2f%n", newBalance);
+                    } else {
+                        System.out.println("\nInterest application cancelled.");
+                    }
+                }
+            }
+        } catch (InvalidAccountException e) {
+            System.out.println("\n❌ Error: " + e.getMessage());
+        } catch (InvalidAmountException e) {
+            // unreachable: interest <= 0 is checked above, so deposit's validation always passes
+            System.out.println("\n❌ Error: " + e.getMessage());
+        }
+
+        System.out.print("\nPress Enter to continue... ");
+        scanner.nextLine();
+    }
+
     private static void viewTransactionHistory(Scanner scanner, AccountManager accountManager,
             TransactionManager transactionManager) {
         System.out.println("\nVIEW TRANSACTION HISTORY");
@@ -289,7 +345,8 @@ public class Main {
 
             double totalDeposits = transactionManager.calculateTotalDeposits(account.getAccountNumber());
             double totalWithdrawals = transactionManager.calculateTotalWithdrawals(account.getAccountNumber());
-            boolean hasTransactions = totalDeposits > 0 || totalWithdrawals > 0;
+            double totalInterest = transactionManager.calculateTotalInterest(account.getAccountNumber());
+            boolean hasTransactions = totalDeposits > 0 || totalWithdrawals > 0 || totalInterest > 0;
 
             if (!hasTransactions) {
                 System.out.println();
@@ -298,7 +355,7 @@ public class Main {
                 System.out.println("\nTRANSACTION HISTORY");
                 transactionManager.viewTransactionsByAccount(account.getAccountNumber());
 
-                double netChange = totalDeposits - totalWithdrawals;
+                double netChange = totalDeposits + totalInterest - totalWithdrawals;
                 String sign;
                 if (netChange >= 0) {
                     sign = "+";
@@ -310,6 +367,7 @@ public class Main {
                         + transactionManager.getTransactionCountByAccount(account.getAccountNumber()));
                 System.out.printf("Total Deposits: $%,.2f%n", totalDeposits);
                 System.out.printf("Total Withdrawals: $%,.2f%n", totalWithdrawals);
+                System.out.printf("Total Interest Earned: $%,.2f%n", totalInterest);
                 System.out.printf("Net Change: %s$%,.2f%n", sign, Math.abs(netChange));
             }
         } catch (InvalidAccountException e) {

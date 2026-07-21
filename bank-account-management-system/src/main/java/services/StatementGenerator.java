@@ -62,7 +62,7 @@ public class StatementGenerator {
 
     private String[] formatStatementRow(Transaction t) {
         String sign;
-        if (t.getType().equalsIgnoreCase("deposit")) {
+        if (t.isCredit()) {
             sign = "+";
         } else {
             sign = "-";
@@ -78,7 +78,8 @@ public class StatementGenerator {
     private void printNetChange(String accountNumber) {
         double totalDeposits = transactionManager.calculateTotalDeposits(accountNumber);
         double totalWithdrawals = transactionManager.calculateTotalWithdrawals(accountNumber);
-        double netChange = totalDeposits - totalWithdrawals;
+        double totalInterest = transactionManager.calculateTotalInterest(accountNumber);
+        double netChange = totalDeposits + totalInterest - totalWithdrawals;
         String sign;
         if (netChange >= 0) {
             sign = "+";

@@ -41,6 +41,12 @@ class AccountTest {
     }
 
     @Test
+    void calculateInterestReturnsBalanceTimesRate() {
+        // account is a SavingsAccount with balance 1000 at the standard 3.5% rate
+        assertEquals(35, account.calculateInterest(), 0.001);
+    }
+
+    @Test
     void overdraftWithinLimitAllowed() throws InvalidAmountException, OverdraftExceededException {
         checkingAccount.withdraw(1200);
         assertEquals(-700, checkingAccount.getBalance());
