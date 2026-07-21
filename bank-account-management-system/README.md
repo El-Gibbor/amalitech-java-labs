@@ -5,7 +5,6 @@
 | **Create Account** | Register a new account for a Regular or Premium customer |
 | **View Accounts** | List all accounts with balances, plus total accounts and total bank balance |
 | **Process Transaction** | Deposit or withdraw money, with a confirmation step before finalizing |
-| **Transfer Between Accounts** | Move a balance from one account to another, under the same validation as a standalone withdrawal and deposit |
 | **View Transaction History** | Show an account's transactions (newest first) with total deposits, total withdrawals, and net change |
 | **Generate Account Statement** | A shorter, statement-style summary of an account's transactions and net change |
 | **Run Tests** | Execute the JUnit 5 test suite from within the running application and report how many tests passed and how many failed |
@@ -28,8 +27,6 @@ so the listing has data on first launch.
 | **Regular** | Standard banking services |
 | **Premium** | Minimum balance $10,000, monthly fees waived |
 
----
-
 ## Exception Handling
 
 Invalid conditions are reported through four custom checked exceptions rather than boolean
@@ -43,39 +40,11 @@ message instead of crashing the application.
 | `OverdraftExceededException` | A checking account withdrawal would exceed the $1,000 overdraft limit |
 | `InvalidAccountException` | An account number does not match any stored account, including a transfer whose source and destination are the same account |
 
----
-
-## Project Structure
-
-```
-bank-account-management-system/
-├── pom.xml
-├── docs/
-│   └── git-workflow.md
-├── src/
-│   ├── main/java/
-│   │   ├── Main.java
-│   │   ├── models/                  Account, Customer hierarchies, Transaction, Transactable
-│   │   │   └── exceptions/          The four custom exceptions
-│   │   ├── services/                AccountManager, TransactionManager, StatementGenerator
-│   │   └── utils/                   TableFormatter
-│   └── test/java/                   Mirrors the package layout above
-│       ├── models/AccountTest.java
-│       ├── models/exceptions/ExceptionTest.java
-│       └── services/TransactionManagerTest.java
-```
-
-Unique IDs are generated with static counters: accounts as `ACC001`, customers as `CUS001`,
-and transactions as `TXN001`.
-
----
 
 ## Requirements
 
 - Java Development Kit (JDK) 11 or later
 - Apache Maven 3.6 or later
-
----
 
 ## Build and Run
 
@@ -86,45 +55,30 @@ environment to display correctly.
 > characters as `?????` regardless of code page or JVM flags. Use one of the
 > supported options below instead.
 
-### Run the test suite
-
-```bash
-mvn test
-```
-
-Compiles both `src/main/java` and `src/test/java`, then runs all 22 tests across
-`AccountTest`, `TransactionManagerTest`, and `ExceptionTest`, printing a summary of how many
-passed and how many failed.
-
-### Recommended: run the application from your IDE
+### Run the application from your IDE
 
 - **IntelliJ IDEA**: open the project (IntelliJ detects `pom.xml` automatically), open
   `Main.java`, and click the **Run** button (▶)
 - **VS Code** (with the Java Extension Pack): open the folder and click **Run** above
   `public static void main`
 
-Both resolve dependencies and compile with UTF-8 automatically. If option 4, "Run Tests," in
-the console menu reports `ClassNotFoundException` for a test class, run `mvn test` once first
-(or build the project once via the IDE's own Maven integration) so the compiled test classes
-exist alongside the main ones; the IDE's own run configuration needs both on its classpath, not
-only the main sources.
+Both resolve dependencies and compile with UTF-8 automatically. This works for every menu
+option **except option 4, "Run Tests"**: most IDE run configurations only put the main output on
+the classpath, not the compiled test classes, which is what a `ClassNotFoundException` for a
+test class at that point means. Use the command below for that option instead.
 
-### Command line, without an IDE
+### Run the application from the command line, including option 4
 
 From this directory:
 
 ```bash
-# Compile main and test sources
-mvn test-compile
-
-# Build a classpath string containing every dependency
-mvn -q dependency:build-classpath -Dmdep.outputFile=cp.txt
-
-# Run, with both compiled outputs and the dependencies on the classpath
-java -cp "target/classes:target/test-classes:$(cat cp.txt)" Main
+mvn test-compile exec:java
 ```
 
-(On Windows, without Git Bash, replace the `:` separators in `-cp` with `;`.)
+This compiles both main and test sources, then runs `Main` with the main output, the compiled
+test classes, and every dependency on the classpath together, so every menu option, including
+"**Run Tests**," works regardless of which IDE, if any, is being used. This is also the most
+reliable way to run the application, and the one to use for option 4 specifically.
 
 ---
 
@@ -143,6 +97,29 @@ including that each custom exception is thrown under the correct condition, plus
 Run them with `mvn test`, or from within the running application via menu option 4, "Run
 Tests," which executes the same suite through the JUnit Platform Launcher and prints a
 per-test result line followed by a summary.
+
+### Test results
+
+As of the current commit, all 22 tests pass, with no failures, errors, or skips:
+
+| Test class | Tests | Passed |
+|---|---|---|
+| `AccountTest` | 9 | 9 |
+| `TransactionManagerTest` | 5 | 5 |
+| `ExceptionTest` | 8 | 8 |
+| **Total** | **22** | **22** |
+
+Output from `mvn test`, run on `feature/testing`:
+
+![mvn test output showing 22 tests run across TransactionManagerTest, AccountTest, and ExceptionTest, all passing, with BUILD SUCCESS](docs/images/mvn-test-results.png)
+
+Output from the console's own "Run Tests" option (menu option 4), which runs the same suite
+through the JUnit Platform Launcher rather than through Maven:
+
+![Console output of the Run Tests menu option, listing each of the 22 tests as PASSED, followed by a summary confirming all 22 tests passed successfully](docs/images/console-test-result.png)
+
+(The order tests print in can vary between runs, since JUnit does not guarantee execution
+order across test classes; the pass count does not.)
 
 ---
 
@@ -180,11 +157,31 @@ At the main menu, enter the number of the option you want:
   its transactions and summary totals.
 - **Generate Account Statements**: enter an account number for a shorter, totals-focused
   summary of its transactions.
-- **Run Tests**: executes the JUnit 5 suite and prints each test's result, followed by a
-  summary of how many passed and how many failed.
+- **Run Tests**: runs the JUnit 5 suite from within the application. See
+  [Testing](#testing) below for what it covers and current results.
 
 Invalid input is handled gracefully: non-numeric menu choices and amounts are rejected and
 re-prompted instead of crashing, and business-rule violations (a non-positive amount, an
 unknown account number, a savings withdrawal breaching the $500 minimum, a checking
 withdrawal exceeding the overdraft limit) are reported as clear error messages rather than
 crashing the application.
+
+## Project Structure
+
+```
+bank-account-management-system/
+├── pom.xml
+├── docs/
+│   └── git-workflow.md
+├── src/
+│   ├── main/java/
+│   │   ├── Main.java
+│   │   ├── models/                  Account, Customer hierarchies, Transaction, Transactable
+│   │   │   └── exceptions/          The four custom exceptions
+│   │   ├── services/                AccountManager, TransactionManager, StatementGenerator
+│   │   └── utils/                   TableFormatter
+│   └── test/java/                   Mirrors the package layout above
+│       ├── models/AccountTest.java
+│       ├── models/exceptions/ExceptionTest.java
+│       └── services/TransactionManagerTest.java
+```
