@@ -52,7 +52,7 @@ public class TransactionManager {
 
     private String[] formatTransactionRow(Transaction t) {
         String sign;
-        if (t.getType().equalsIgnoreCase("deposit")) {
+        if (t.isCredit()) {
             sign = "+";
         } else {
             sign = "-";
@@ -104,6 +104,18 @@ public class TransactionManager {
             }
         }
         return totalWithdrawals;
+    }
+
+    /** @return the total amount of interest applied to the given account */
+    public double calculateTotalInterest(String accountNumber) {
+        double totalInterest = 0;
+        for (int i = 0; i < transactionCount; i++) {
+            if (transactions[i].getAccountNumber().equals(accountNumber)
+                    && transactions[i].getType().equalsIgnoreCase("interest")) {
+                totalInterest += transactions[i].getAmount();
+            }
+        }
+        return totalInterest;
     }
 
     /** @return the total number of transactions recorded across all accounts */

@@ -51,6 +51,14 @@ class TransactionManagerTest {
     }
 
     @Test
+    void calculateTotalInterestSumsOnlyInterest() {
+        transactionManager.addTransaction(new Transaction("ACC001", "Deposit", 500, 500));
+        transactionManager.addTransaction(new Transaction("ACC001", "Interest", 17.5, 517.5));
+
+        assertEquals(17.5, transactionManager.calculateTotalInterest("ACC001"));
+    }
+
+    @Test
     void getTransactionCountByAccountFiltersByAccount() {
         transactionManager.addTransaction(new Transaction("ACC001", "Deposit", 500, 500));
         transactionManager.addTransaction(new Transaction("ACC002", "Deposit", 300, 300));

@@ -10,7 +10,7 @@ public class Transaction {
     private final String transactionId;
     private final String accountNumber;
     private final double amount;
-    private final String type; // "Deposit" or "Withdrawal"
+    private final String type; // "Deposit", "Withdrawal", or "Interest"
     private final double balanceAfter;
     private final String timestamp;
 
@@ -35,6 +35,11 @@ public class Transaction {
     public double getBalanceAfter() { return balanceAfter; }
 
     public String getTimestamp() { return timestamp; }
+
+    /** @return true if this transaction increased the account balance (Deposit or Interest) */
+    public boolean isCredit() {
+        return type.equalsIgnoreCase("Deposit") || type.equalsIgnoreCase("Interest");
+    }
 
     public void displayTransactionDetails() {
         System.out.println("Transaction ID: " + transactionId);

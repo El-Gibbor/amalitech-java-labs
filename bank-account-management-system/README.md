@@ -5,6 +5,7 @@
 | **Create Account** | Register a new account for a Regular or Premium customer |
 | **View Accounts** | List all accounts with balances, plus total accounts and total bank balance |
 | **Process Transaction** | Deposit or withdraw money, with a confirmation step before finalizing |
+| **Apply Interest** | Credit a Savings account with interest on its current balance, with a confirmation step before finalizing |
 | **View Transaction History** | Show an account's transactions (newest first) with total deposits, total withdrawals, and net change |
 | **Generate Account Statement** | A shorter, statement-style summary of an account's transactions and net change |
 | **Run Tests** | Execute the JUnit 5 test suite from within the running application and report how many tests passed and how many failed |
@@ -100,14 +101,14 @@ per-test result line followed by a summary.
 
 ### Test results
 
-As of the current commit, all 22 tests pass, with no failures, errors, or skips:
+As of the current commit, all 24 tests pass, with no failures, errors, or skips:
 
 | Test class | Tests | Passed |
 |---|---|---|
-| `AccountTest` | 9 | 9 |
-| `TransactionManagerTest` | 5 | 5 |
+| `AccountTest` | 10 | 10 |
+| `TransactionManagerTest` | 6 | 6 |
 | `ExceptionTest` | 8 | 8 |
-| **Total** | **22** | **22** |
+| **Total** | **24** | **24** |
 
 Output from `mvn test`, run on `feature/testing`:
 
@@ -153,6 +154,8 @@ At the main menu, enter the number of the option you want:
 - **Perform Transactions**, then **Process Transaction**: enter an account number, choose
   Deposit or Withdrawal, enter an amount, then confirm with `Y` to finalize (or `N` to
   cancel; a cancelled transaction leaves the balance unchanged).
+- **Perform Transactions**, then **Apply Interest**: enter an account number, review the
+  computed interest, then confirm with `Y` to credit it to the account (Savings accounts only).
 - **Perform Transactions**, then **View Transaction History**: enter an account number to see
   its transactions and summary totals.
 - **Generate Account Statements**: enter an account number for a shorter, totals-focused
