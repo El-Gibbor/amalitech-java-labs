@@ -1,31 +1,30 @@
 package services;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import models.Transaction;
 import utils.TableFormatter;
 
-/** Stores and queries transactions for all accounts, backed by a fixed-size array. */
+/** Stores and queries transactions for all accounts. */
 public class TransactionManager {
-    // Fixed capacity of 200; transactionCount marks how many slots are used and the next free index
-    private Transaction[] transactions = new Transaction[200];
-    private int transactionCount = 0;
+    private List<Transaction> transactions = new ArrayList<>();
 
-    /** @return true if the transaction was added, false if storage is full */
+    /** @return true, since an ArrayList has no fixed capacity and a transaction is always accepted */
     public boolean addTransaction(Transaction transaction) {
-        if (transactionCount < this.transactions.length) {
-            this.transactions[transactionCount++] = transaction;
-            return true;
-        }
-        return false;
+        transactions.add(transaction);
+        return true;
     }
 
     /** Prints the transaction history for the given account, newest first. */
     public void viewTransactionsByAccount(String accountNumber) {
-        int count = getTransactionCountByAccount(accountNumber);
-        if (count == 0) {
+        if (getTransactionCountByAccount(accountNumber) == 0) {
             printNoTransactionsMessage();
             return;
         }
-        String[][] rows = buildTransactionRows(accountNumber, count);
+        String[][] rows = buildTransactionRows(accountNumber);
         printTransactionTable(rows);
     }
 
@@ -37,17 +36,10 @@ public class TransactionManager {
         System.out.println(line);
     }
 
-    // walk backwards so the newest transaction fills the first row
-    private String[][] buildTransactionRows(String accountNumber, int count) {
-        String[][] rows = new String[count][5];
-        int r = 0;
-        for (int i = transactionCount - 1; i >= 0; i--) {
-            if (transactions[i].getAccountNumber().equals(accountNumber)) {
-                rows[r] = formatTransactionRow(transactions[i]);
-                r++;
-            }
-        }
-        return rows;
+    private String[][] buildTransactionRows(String accountNumber) {
+        return newestFirstForAccount(accountNumber).stream()
+                .map(this::formatTransactionRow)
+                .toArray(String[][]::new);
     }
 
     private String[] formatTransactionRow(Transaction t) {
@@ -84,54 +76,43 @@ public class TransactionManager {
 
     /** @return the total amount deposited into the given account */
     public double calculateTotalDeposits(String accountNumber) {
-        double totalDeposits = 0;
-        for (int i = 0; i < transactionCount; i++) {
-            if (transactions[i].getAccountNumber().equals(accountNumber)
-                    && transactions[i].getType().equalsIgnoreCase("deposit")) {
-                totalDeposits += transactions[i].getAmount();
-            }
-        }
-        return totalDeposits;
+        return this.transactions.stream()
+                .filter(t -> t.getAccountNumber().equals(accountNumber) && t.getType().equalsIgnoreCase("deposit"))
+                .mapToDouble(Transaction::getAmount)
+                .reduce(0.0, Double::sum);
     }
 
     /** @return the total amount withdrawn from the given account */
     public double calculateTotalWithdrawals(String accountNumber) {
-        double totalWithdrawals = 0;
-        for (int i = 0; i < transactionCount; i++) {
-            if (transactions[i].getAccountNumber().equals(accountNumber)
-                    && transactions[i].getType().equalsIgnoreCase("withdrawal")) {
-                totalWithdrawals += transactions[i].getAmount();
-            }
-        }
-        return totalWithdrawals;
+        return this.transactions.stream()
+                .filter(t -> t.getAccountNumber().equals(accountNumber) && t.getType().equalsIgnoreCase("withdrawal"))
+                .mapToDouble(Transaction::getAmount)
+                .reduce(0.0, Double::sum);
     }
 
     /** @return the total number of transactions recorded across all accounts */
     public int getTransactionCount() {
-        return transactionCount;
+        return transactions.size();
     }
 
     /** @return the number of recorded transactions belonging to the given account */
     public int getTransactionCountByAccount(String accountNumber) {
-        int count = 0;
-        for (int i = 0; i < transactionCount; i++) {
-            if (transactions[i].getAccountNumber().equals(accountNumber)) {
-                count++;
-            }
-        }
-        return count;
+        return (int) this.transactions.stream()
+                .filter(t -> t.getAccountNumber().equals(accountNumber))
+                .count();
     }
 
     /** @return the transactions belonging to the given account, newest first */
     public Transaction[] getTransactionsForAccount(String accountNumber) {
-        Transaction[] result = new Transaction[getTransactionCountByAccount(accountNumber)];
-        int r = 0;
-        for (int i = transactionCount - 1; i >= 0; i--) {
-            if (transactions[i].getAccountNumber().equals(accountNumber)) {
-                result[r] = transactions[i];
-                r++;
-            }
-        }
-        return result;
+        return newestFirstForAccount(accountNumber).toArray(Transaction[]::new);
+    }
+
+    /** @return every transaction belonging to the given account, newest first */
+    private List<Transaction> newestFirstForAccount(String accountNumber) {
+        List<Transaction> matches = transactions.stream()
+                .filter(t -> t.getAccountNumber().equals(accountNumber))
+                .collect(Collectors.toList());
+        Collections.reverse(matches);
+        return matches;
     }
 }
