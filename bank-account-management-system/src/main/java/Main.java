@@ -150,7 +150,7 @@ public class Main {
 
         boolean added = accountManager.addAccount(account);
         if (!added) {
-            System.out.println("\nAccount storage is full. Could not create account.");
+            System.out.println("\nAn account with this account number already exists. Could not create account.");
             return;
         }
 
