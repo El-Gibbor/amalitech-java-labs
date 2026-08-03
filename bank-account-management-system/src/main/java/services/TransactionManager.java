@@ -2,6 +2,7 @@ package services;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -114,5 +115,27 @@ public class TransactionManager {
                 .collect(Collectors.toList());
         Collections.reverse(matches);
         return matches;
+    }
+
+    /**
+     * @param descending true for highest amount first, false for lowest amount first
+     * @return every recorded transaction across all accounts, sorted by amount
+     */
+    public List<Transaction> getTransactionsSortedByAmount(boolean descending) {
+        Comparator<Transaction> byAmount = Comparator.comparingDouble(Transaction::getAmount);
+        return transactions.stream()
+                .sorted(descending ? byAmount.reversed() : byAmount)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * @param descending true for most recent first, false for oldest first
+     * @return every recorded transaction across all accounts, sorted by timestamp
+     */
+    public List<Transaction> getTransactionsSortedByDate(boolean descending) {
+        Comparator<Transaction> byDate = Comparator.comparing(Transaction::getCreatedAt);
+        return transactions.stream()
+                .sorted(descending ? byDate.reversed() : byDate)
+                .collect(Collectors.toList());
     }
 }
