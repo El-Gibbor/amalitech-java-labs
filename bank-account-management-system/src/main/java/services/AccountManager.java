@@ -112,11 +112,9 @@ public class AccountManager {
 
     /** @return the sum of every stored account's balance */
     public double getTotalBalance() {
-        double totalBalance = 0;
-        for (Account account : accountsMap.values()) {
-            totalBalance += account.getBalance();
-        }
-        return totalBalance;
+        return accountsMap.values().stream()
+                .mapToDouble(Account::getBalance)
+                .sum();
     }
 
     /** @return the number of accounts currently stored */
