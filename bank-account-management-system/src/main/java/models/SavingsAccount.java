@@ -19,6 +19,13 @@ public class SavingsAccount extends Account {
         this.minimumBalance = 500;
     }
 
+    /** Reconstructs a savings account with an identity assigned earlier, for example when loading one previously saved to a file. */
+    public SavingsAccount(String accountNumber, Customer customer, double balance, String status) {
+        super(accountNumber, customer, balance, status);
+        this.interestRate = 0.035;
+        this.minimumBalance = 500;
+    }
+
     @Override
     public void displayAccountDetails() {
         System.out.println("  Account Number: " + getAccountNumber());

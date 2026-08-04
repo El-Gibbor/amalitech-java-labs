@@ -18,6 +18,13 @@ public class CheckingAccount extends Account {
         this.monthlyFee = 10;
     }
 
+    /** Reconstructs a checking account with an identity assigned earlier, for example when loading one previously saved to a file. */
+    public CheckingAccount(String accountNumber, Customer customer, double balance, String status) {
+        super(accountNumber, customer, balance, status);
+        this.overdraftLimit = 1000;
+        this.monthlyFee = 10;
+    }
+
     @Override
     public void displayAccountDetails() {
         System.out.println("  Account Number: " + getAccountNumber());
