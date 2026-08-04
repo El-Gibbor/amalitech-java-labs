@@ -96,6 +96,11 @@ public class TransactionManager {
         return transactions.size();
     }
 
+    /** @return every recorded transaction across all accounts, in the order they were recorded */
+    public List<Transaction> getAllTransactions() {
+        return new ArrayList<>(transactions);
+    }
+
     /** @return the number of recorded transactions belonging to the given account */
     public int getTransactionCountByAccount(String accountNumber) {
         return (int) this.transactions.stream()
