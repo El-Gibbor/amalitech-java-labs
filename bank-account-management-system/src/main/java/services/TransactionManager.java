@@ -101,6 +101,11 @@ public class TransactionManager {
         return new ArrayList<>(transactions);
     }
 
+    /** Discards every recorded transaction, for example immediately before reloading from disk. */
+    public void clear() {
+        transactions.clear();
+    }
+
     /** @return the number of recorded transactions belonging to the given account */
     public int getTransactionCountByAccount(String accountNumber) {
         return (int) this.transactions.stream()

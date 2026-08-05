@@ -128,4 +128,9 @@ public class AccountManager {
     public List<Account> getAllAccounts() {
         return new ArrayList<>(accountsMap.values());
     }
+
+    /** Discards every stored account, for example immediately before reloading from disk. */
+    public void clear() {
+        accountsMap.clear();
+    }
 }
