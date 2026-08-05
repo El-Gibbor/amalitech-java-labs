@@ -85,7 +85,7 @@ public class Main {
                     saveLoadDataMenu(scanner, accountManager, transactionManager, filePersistenceService);
                     break;
                 case 5:
-                    runConcurrentSimulation(scanner, accountManager);
+                    runConcurrentSimulation(scanner, accountManager, transactionManager);
                     break;
                 case 6:
                     runTests(scanner);
@@ -404,7 +404,8 @@ public class Main {
         scanner.nextLine();
     }
 
-    private static void runConcurrentSimulation(Scanner scanner, AccountManager accountManager) {
+    private static void runConcurrentSimulation(Scanner scanner, AccountManager accountManager,
+            TransactionManager transactionManager) {
         System.out.println("\nCONCURRENT TRANSACTION SIMULATION");
         System.out.println("─────────────────────────────────────────────\n");
 
@@ -420,7 +421,7 @@ public class Main {
                     new ConcurrencyUtils.Operation("Withdrawal", 200));
 
             System.out.println();
-            ConcurrencyUtils.runConcurrentSimulation(account, operations);
+            ConcurrencyUtils.runConcurrentSimulation(account, transactionManager, operations);
         } catch (InvalidAccountException e) {
             System.out.println("\n❌ Error: " + e.getMessage());
         }

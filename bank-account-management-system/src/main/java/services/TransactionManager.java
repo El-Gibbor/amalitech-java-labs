@@ -13,8 +13,10 @@ import utils.TableFormatter;
 public class TransactionManager {
     private List<Transaction> transactions = new ArrayList<>();
 
-    /** @return true, since an ArrayList has no fixed capacity and a transaction is always accepted */
-    public boolean addTransaction(Transaction transaction) {
+    /**
+     * @return true, since an ArrayList has no fixed capacity and a transaction is always accepted
+     */
+    public synchronized boolean addTransaction(Transaction transaction) {
         transactions.add(transaction);
         return true;
     }
