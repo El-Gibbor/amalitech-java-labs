@@ -11,29 +11,32 @@ public abstract class Customer {
     private int age;
     private String contact;
     private String address;
+    private String email;
 
     private static int customerCounter = 0;
 
     /** Creates a customer with an auto-generated customer ID. */
-    public Customer(String name, int age, String contact, String address) {
+    public Customer(String name, int age, String contact, String address, String email) {
         customerCounter++;
         this.customerId = String.format("CUS%03d", customerCounter);
         this.name = name;
         this.age = age;
         this.contact = contact;
         this.address = address;
+        this.email = email;
     }
 
     /**
      * Reconstructs a customer with an identity assigned earlier, for example when loading
      * one previously saved to a file. Does not consume a new customer ID from the counter.
      */
-    protected Customer(String customerId, String name, int age, String contact, String address) {
+    protected Customer(String customerId, String name, int age, String contact, String address, String email) {
         this.customerId = customerId;
         this.name = name;
         this.age = age;
         this.contact = contact;
         this.address = address;
+        this.email = email;
     }
 
     public String getCustomerId() { return customerId; }
@@ -70,6 +73,14 @@ public abstract class Customer {
     public void setAddress(String address) {
         requireNonBlank(address, "Address");
         this.address = address;
+    }
+
+    public String getEmail() { return email; }
+
+    /** @throws IllegalArgumentException if email is null or blank */
+    public void setEmail(String email) {
+        requireNonBlank(email, "Email");
+        this.email = email;
     }
 
     private static void requireNonBlank(String value, String fieldName) {

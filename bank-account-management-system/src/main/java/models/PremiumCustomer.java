@@ -8,14 +8,14 @@ public class PremiumCustomer extends Customer {
     private double minimumBalance;
 
     /** Creates a premium customer with the standard minimum balance requirement. */
-    public PremiumCustomer(String name, int age, String contact, String address) {
-        super(name, age, contact, address);
+    public PremiumCustomer(String name, int age, String contact, String address, String email) {
+        super(name, age, contact, address, email);
         this.minimumBalance = 10000.0;
     }
 
     /** Reconstructs a premium customer with an identity assigned earlier, for example when loading one previously saved to a file. */
-    public PremiumCustomer(String customerId, String name, int age, String contact, String address) {
-        super(customerId, name, age, contact, address);
+    public PremiumCustomer(String customerId, String name, int age, String contact, String address, String email) {
+        super(customerId, name, age, contact, address, email);
         this.minimumBalance = 10000.0;
     }
 
@@ -33,6 +33,7 @@ public class PremiumCustomer extends Customer {
         System.out.println("Name: " + getName());
         System.out.println("Age: " + getAge());
         System.out.println("Contact: " + getContact());
+        System.out.println("Email: " + getEmail());
         System.out.println("Address: " + getAddress());
         System.out.println("Type: " + getCustomerType());
         System.out.println("Minimum Balance: " + getMinimumBalance());

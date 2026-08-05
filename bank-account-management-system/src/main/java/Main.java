@@ -1,4 +1,5 @@
 import java.util.Scanner;
+import java.util.function.Predicate;
 
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.discovery.DiscoverySelectors;
@@ -26,6 +27,7 @@ import services.AccountManager;
 import services.FilePersistenceService;
 import services.StatementGenerator;
 import services.TransactionManager;
+import utils.ValidationUtils;
 
 public class Main {
     public static void main(String[] args) {
@@ -127,8 +129,12 @@ public class Main {
 
         int age = readIntInRange(scanner, "Enter customer age: ", 1, 120);
 
-        System.out.print("Enter customer contact: ");
-        String contact = scanner.nextLine();
+        String contact = readValidated(scanner, "Enter customer contact: ", ValidationUtils.IS_VALID_PHONE_NUMBER,
+                "❌ Error: Invalid phone number format. Please enter digits only, optionally with a leading + and hyphens (e.g. +1-555-0101).");
+
+        String email = readValidated(scanner, "Enter customer email: ", ValidationUtils.IS_VALID_EMAIL,
+                "❌ Error: Invalid email format. Please enter a valid address (e.g., name@example.com)");
+        System.out.println("✓ Email accepted!");
 
         System.out.print("Enter customer address: ");
         String address = scanner.nextLine();
@@ -140,9 +146,9 @@ public class Main {
 
         Customer customer;
         if (customerType == 2) {
-            customer = new PremiumCustomer(name, age, contact, address);
+            customer = new PremiumCustomer(name, age, contact, address, email);
         } else {
-            customer = new RegularCustomer(name, age, contact, address);
+            customer = new RegularCustomer(name, age, contact, address, email);
         }
 
         System.out.println("\nAccount type:");
@@ -211,8 +217,8 @@ public class Main {
         System.out.println("\nPROCESS TRANSACTION");
         System.out.println("─────────────────────────────────────────────\n");
 
-        System.out.print("Enter Account Number: ");
-        String accountNumber = scanner.nextLine();
+        String accountNumber = readValidated(scanner, "Enter Account Number: ", ValidationUtils.IS_VALID_ACCOUNT_NUMBER,
+                "❌ Error: Invalid account number format. Expected ACC followed by exactly three digits (e.g. ACC003).");
 
         try {
             Account account = accountManager.findAccount(accountNumber);
@@ -287,8 +293,8 @@ public class Main {
         System.out.println("\nVIEW TRANSACTION HISTORY");
         System.out.println("─────────────────────────────────────────────\n");
 
-        System.out.print("Enter Account Number: ");
-        String accountNumber = scanner.nextLine();
+        String accountNumber = readValidated(scanner, "Enter Account Number: ", ValidationUtils.IS_VALID_ACCOUNT_NUMBER,
+                "❌ Error: Invalid account number format. Expected ACC followed by exactly three digits (e.g. ACC003).");
 
         try {
             Account account = accountManager.findAccount(accountNumber);
@@ -336,8 +342,8 @@ public class Main {
         System.out.println("\nGENERATE ACCOUNT STATEMENT");
         System.out.println("─────────────────────────────────────────────\n");
 
-        System.out.print("Enter Account Number: ");
-        String accountNumber = scanner.nextLine();
+        String accountNumber = readValidated(scanner, "Enter Account Number: ", ValidationUtils.IS_VALID_ACCOUNT_NUMBER,
+                "❌ Error: Invalid account number format. Expected ACC followed by exactly three digits (e.g. ACC003).");
 
         try {
             Account account = accountManager.findAccount(accountNumber);
@@ -424,6 +430,19 @@ public class Main {
         }
     }
 
+    // Reads a line and re-prompts until it satisfies isValid, showing errorMessage on each miss
+    private static String readValidated(Scanner scanner, String prompt, Predicate<String> isValid,
+            String errorMessage) {
+        while (true) {
+            System.out.print(prompt);
+            String value = scanner.nextLine();
+            if (isValid.test(value)) {
+                return value;
+            }
+            System.out.println(errorMessage);
+        }
+    }
+
     // Reads a positive amount, rejecting non-numbers, zero or negative values
     private static double readPositiveDouble(Scanner scanner, String prompt) {
         while (true) {
@@ -444,23 +463,23 @@ public class Main {
 
     // Bootstrap: five demo accounts (3 Savings, 2 Checking)
     private static void seedAccounts(AccountManager accountManager) {
-        RegularCustomer customer1 = new RegularCustomer("John Smith", 35, "+1-555-0101", "12 Elm Street, Springfield");
+        RegularCustomer customer1 = new RegularCustomer("John Smith", 35, "+1-555-0101", "12 Elm Street, Springfield", "john.smith@example.com");
         SavingsAccount account1 = new SavingsAccount(customer1, 5250);
         accountManager.addAccount(account1);
 
-        RegularCustomer customer2 = new RegularCustomer("Sarah Johnson", 29, "+1-555-0102", "48 Oak Avenue, Springfield");
+        RegularCustomer customer2 = new RegularCustomer("Sarah Johnson", 29, "+1-555-0102", "48 Oak Avenue, Springfield", "sarah.johnson@example.com");
         CheckingAccount account2 = new CheckingAccount(customer2, 3450);
         accountManager.addAccount(account2);
 
-        RegularCustomer customer3 = new RegularCustomer("Michael Chen", 41, "+1-555-0103", "7 Pine Road, Springfield");
+        RegularCustomer customer3 = new RegularCustomer("Michael Chen", 41, "+1-555-0103", "7 Pine Road, Springfield", "michael.chen@example.com");
         SavingsAccount account3 = new SavingsAccount(customer3, 15750);
         accountManager.addAccount(account3);
 
-        RegularCustomer customer4 = new RegularCustomer("Emily Brown", 33, "+1-555-0104", "90 Maple Lane, Springfield");
+        RegularCustomer customer4 = new RegularCustomer("Emily Brown", 33, "+1-555-0104", "90 Maple Lane, Springfield", "emily.brown@example.com");
         CheckingAccount account4 = new CheckingAccount(customer4, 890);
         accountManager.addAccount(account4);
 
-        RegularCustomer customer5 = new RegularCustomer("David Wilson", 52, "+1-555-0105", "23 Birch Court, Springfield");
+        RegularCustomer customer5 = new RegularCustomer("David Wilson", 52, "+1-555-0105", "23 Birch Court, Springfield", "david.wilson@example.com");
         SavingsAccount account5 = new SavingsAccount(customer5, 25300);
         accountManager.addAccount(account5);
     }

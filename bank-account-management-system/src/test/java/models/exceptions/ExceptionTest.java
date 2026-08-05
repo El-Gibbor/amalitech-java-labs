@@ -18,7 +18,7 @@ class ExceptionTest {
 
     @BeforeEach
     void setUp() {
-        RegularCustomer customer = new RegularCustomer("Jane Doe", 30, "+1-555-0000", "1 Test Street");
+        RegularCustomer customer = new RegularCustomer("Jane Doe", 30, "+1-555-0000", "1 Test Street", "jane.doe@example.com");
         account = new SavingsAccount(customer, 1000);
         accountManager = new AccountManager();
     }
