@@ -64,9 +64,10 @@ public class Main {
             System.out.println("1. Manage Accounts");
             System.out.println("2. Perform Transactions");
             System.out.println("3. Generate Account Statements");
-            System.out.println("4. Run Concurrent Simulation");
-            System.out.println("5. Run Tests");
-            System.out.println("6. Exit\n");
+            System.out.println("4. Save/Load Data");
+            System.out.println("5. Run Concurrent Simulation");
+            System.out.println("6. Run Tests");
+            System.out.println("7. Exit\n");
 
             int choice = readInt(scanner, "Enter your choice: ");
 
@@ -81,12 +82,15 @@ public class Main {
                     generateAccountStatement(scanner, accountManager, statementGenerator);
                     break;
                 case 4:
-                    runConcurrentSimulation(scanner, accountManager);
+                    saveLoadDataMenu(scanner, accountManager, transactionManager, filePersistenceService);
                     break;
                 case 5:
-                    runTests(scanner);
+                    runConcurrentSimulation(scanner, accountManager);
                     break;
                 case 6:
+                    runTests(scanner);
+                    break;
+                case 7:
                     programRunning = false;
                     System.out.println();
                     filePersistenceService.saveAccounts(accountManager);
@@ -99,6 +103,44 @@ public class Main {
         }
 
         scanner.close();
+    }
+
+    // Submenu: save data on demand, or discard in-memory state and reload from disk
+    private static void saveLoadDataMenu(Scanner scanner, AccountManager accountManager,
+            TransactionManager transactionManager, FilePersistenceService filePersistenceService) {
+        boolean inSubmenu = true;
+        while (inSubmenu) {
+            System.out.println("\nSAVE/LOAD DATA");
+            System.out.println("1. Save Data Now");
+            System.out.println("2. Reload Data from Files");
+            System.out.println("3. Back to Main Menu\n");
+
+            int choice = readIntInRange(scanner, "Enter your choice: ", 1, 3);
+
+            switch (choice) {
+                case 1:
+                    System.out.println();
+                    filePersistenceService.saveAccounts(accountManager);
+                    filePersistenceService.saveTransactions(transactionManager);
+                    System.out.print("\nPress Enter to continue... ");
+                    scanner.nextLine();
+                    break;
+                case 2:
+                    // discard in-memory state first, or a reload would append duplicate
+                    // transactions and could leave stale accounts behind
+                    accountManager.clear();
+                    transactionManager.clear();
+                    System.out.println();
+                    filePersistenceService.loadAccounts(accountManager);
+                    filePersistenceService.loadTransactions(transactionManager);
+                    System.out.print("\nPress Enter to continue... ");
+                    scanner.nextLine();
+                    break;
+                case 3:
+                    inSubmenu = false;
+                    break;
+            }
+        }
     }
 
     // Submenu: create or view accounts, looping until the user chooses to go back
