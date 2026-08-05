@@ -56,7 +56,7 @@ public class SavingsAccount extends Account {
      *         super.withdraw's signature reserves it
      */
     @Override
-    public void withdraw(double amount)
+    public synchronized void withdraw(double amount)
             throws InvalidAmountException, InsufficientFundsException, OverdraftExceededException {
         if (wouldBreachMinimumBalance(amount)) {
             throw new InsufficientFundsException(

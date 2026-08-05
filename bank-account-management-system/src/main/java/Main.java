@@ -1,3 +1,4 @@
+import java.util.List;
 import java.util.Scanner;
 import java.util.function.Predicate;
 
@@ -27,6 +28,7 @@ import services.AccountManager;
 import services.FilePersistenceService;
 import services.StatementGenerator;
 import services.TransactionManager;
+import utils.ConcurrencyUtils;
 import utils.ValidationUtils;
 
 public class Main {
@@ -62,8 +64,9 @@ public class Main {
             System.out.println("1. Manage Accounts");
             System.out.println("2. Perform Transactions");
             System.out.println("3. Generate Account Statements");
-            System.out.println("4. Run Tests");
-            System.out.println("5. Exit\n");
+            System.out.println("4. Run Concurrent Simulation");
+            System.out.println("5. Run Tests");
+            System.out.println("6. Exit\n");
 
             int choice = readInt(scanner, "Enter your choice: ");
 
@@ -78,9 +81,12 @@ public class Main {
                     generateAccountStatement(scanner, accountManager, statementGenerator);
                     break;
                 case 4:
-                    runTests(scanner);
+                    runConcurrentSimulation(scanner, accountManager);
                     break;
                 case 5:
+                    runTests(scanner);
+                    break;
+                case 6:
                     programRunning = false;
                     System.out.println();
                     filePersistenceService.saveAccounts(accountManager);
@@ -348,6 +354,31 @@ public class Main {
         try {
             Account account = accountManager.findAccount(accountNumber);
             statementGenerator.generateStatement(account);
+        } catch (InvalidAccountException e) {
+            System.out.println("\n❌ Error: " + e.getMessage());
+        }
+
+        System.out.print("\nPress Enter to continue... ");
+        scanner.nextLine();
+    }
+
+    private static void runConcurrentSimulation(Scanner scanner, AccountManager accountManager) {
+        System.out.println("\nCONCURRENT TRANSACTION SIMULATION");
+        System.out.println("─────────────────────────────────────────────\n");
+
+        String accountNumber = readValidated(scanner, "Enter Account Number: ", ValidationUtils.IS_VALID_ACCOUNT_NUMBER,
+                "❌ Error: Invalid account number format. Expected ACC followed by exactly three digits (e.g. ACC003).");
+
+        try {
+            Account account = accountManager.findAccount(accountNumber);
+
+            List<ConcurrencyUtils.Operation> operations = List.of(
+                    new ConcurrencyUtils.Operation("Deposit", 500),
+                    new ConcurrencyUtils.Operation("Deposit", 300),
+                    new ConcurrencyUtils.Operation("Withdrawal", 200));
+
+            System.out.println();
+            ConcurrencyUtils.runConcurrentSimulation(account, operations);
         } catch (InvalidAccountException e) {
             System.out.println("\n❌ Error: " + e.getMessage());
         }
