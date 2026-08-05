@@ -25,6 +25,22 @@ public class Transaction {
         this.timestamp = createdAt.format(DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a"));
     }
 
+    /**
+     * Reconstructs a transaction with an identity and timestamp assigned earlier, for
+     * example when loading one previously saved to a file. Does not consume a new
+     * transaction ID from the counter.
+     */
+    public Transaction(String transactionId, String accountNumber, String type, double amount,
+            double balanceAfter, LocalDateTime createdAt) {
+        this.transactionId = transactionId;
+        this.accountNumber = accountNumber;
+        this.amount = amount;
+        this.type = type;
+        this.balanceAfter = balanceAfter;
+        this.createdAt = createdAt;
+        this.timestamp = createdAt.format(DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a"));
+    }
+
     // Getters for all fields
     public String getTransactionId() { return transactionId; }
 
@@ -40,6 +56,16 @@ public class Transaction {
 
     /** @return the exact instant the transaction was recorded, for chronological comparison */
     public LocalDateTime getCreatedAt() { return createdAt; }
+
+    /**
+     * Advances the transaction ID counter so newly created transactions never repeat a
+     * number already in use, for example one just restored from a persisted file.
+     */
+    public static void ensureCounterAtLeast(int usedNumber) {
+        if (usedNumber > transactionCounter) {
+            transactionCounter = usedNumber;
+        }
+    }
 
     public void displayTransactionDetails() {
         System.out.println("Transaction ID: " + transactionId);

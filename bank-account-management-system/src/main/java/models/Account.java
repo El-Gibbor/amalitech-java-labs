@@ -21,8 +21,30 @@ public abstract class Account implements Transactable {
         this.status = "Active";
     }
 
+    /**
+     * Reconstructs an account with an identity and status assigned earlier, for example
+     * when loading one previously saved to a file. Does not consume a new account number
+     * from the counter.
+     */
+    protected Account(String accountNumber, Customer customer, double balance, String status) {
+        this.accountNumber = accountNumber;
+        this.customer = customer;
+        this.balance = balance;
+        this.status = status;
+    }
+
     public String getAccountNumber() {
         return accountNumber;
+    }
+
+    /**
+     * Advances the account number counter so newly created accounts never repeat a number
+     * already in use, for example one just restored from a persisted file.
+     */
+    public static void ensureCounterAtLeast(int usedNumber) {
+        if (usedNumber > accountCounter) {
+            accountCounter = usedNumber;
+        }
     }
 
     /** @throws IllegalArgumentException if accountNumber is null or blank */

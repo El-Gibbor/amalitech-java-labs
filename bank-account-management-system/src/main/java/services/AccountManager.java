@@ -1,6 +1,8 @@
 package services;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import models.Account;
@@ -80,7 +82,7 @@ public class AccountManager {
         return rows;
     }
 
-    private String[] formatAccountRow(Account a) {
+    private String[] formatAccountRow(Account a) { 
         return new String[] {
                 a.getAccountNumber(),
                 a.getCustomer().getName(),
@@ -120,5 +122,10 @@ public class AccountManager {
     /** @return the number of accounts currently stored */
     public int getAccountCount() {
         return accountsMap.size();
+    }
+
+    /** @return every stored account, in no particular order */
+    public List<Account> getAllAccounts() {
+        return new ArrayList<>(accountsMap.values());
     }
 }

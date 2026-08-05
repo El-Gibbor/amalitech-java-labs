@@ -7,6 +7,11 @@ public class RegularCustomer extends Customer {
         super(name, age, contact, address);
     }
 
+    /** Reconstructs a regular customer with an identity assigned earlier, for example when loading one previously saved to a file. */
+    public RegularCustomer(String customerId, String name, int age, String contact, String address) {
+        super(customerId, name, age, contact, address);
+    }
+
     @Override
     public void displayCustomerDetails() {
         System.out.println("Customer ID: " + getCustomerId());

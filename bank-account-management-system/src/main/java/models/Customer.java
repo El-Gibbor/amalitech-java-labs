@@ -24,6 +24,18 @@ public abstract class Customer {
         this.address = address;
     }
 
+    /**
+     * Reconstructs a customer with an identity assigned earlier, for example when loading
+     * one previously saved to a file. Does not consume a new customer ID from the counter.
+     */
+    protected Customer(String customerId, String name, int age, String contact, String address) {
+        this.customerId = customerId;
+        this.name = name;
+        this.age = age;
+        this.contact = contact;
+        this.address = address;
+    }
+
     public String getCustomerId() { return customerId; }
 
     public String getName() { return name; }
@@ -63,6 +75,16 @@ public abstract class Customer {
     private static void requireNonBlank(String value, String fieldName) {
         if (value == null || value.trim().isEmpty()) {
             throw new IllegalArgumentException(fieldName + " cannot be null or empty.");
+        }
+    }
+
+    /**
+     * Advances the customer ID counter so newly created customers never repeat a number
+     * already in use, for example one just restored from a persisted file.
+     */
+    public static void ensureCounterAtLeast(int usedNumber) {
+        if (usedNumber > customerCounter) {
+            customerCounter = usedNumber;
         }
     }
 

@@ -13,6 +13,12 @@ public class PremiumCustomer extends Customer {
         this.minimumBalance = 10000.0;
     }
 
+    /** Reconstructs a premium customer with an identity assigned earlier, for example when loading one previously saved to a file. */
+    public PremiumCustomer(String customerId, String name, int age, String contact, String address) {
+        super(customerId, name, age, contact, address);
+        this.minimumBalance = 10000.0;
+    }
+
     public void setMinimumBalance(double minimumBalance) {
         this.minimumBalance = minimumBalance;
     }

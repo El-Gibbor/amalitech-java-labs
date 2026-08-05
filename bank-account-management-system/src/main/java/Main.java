@@ -23,6 +23,7 @@ import models.exceptions.InvalidAccountException;
 import models.exceptions.InvalidAmountException;
 import models.exceptions.OverdraftExceededException;
 import services.AccountManager;
+import services.FilePersistenceService;
 import services.StatementGenerator;
 import services.TransactionManager;
 
@@ -31,9 +32,16 @@ public class Main {
         AccountManager accountManager = new AccountManager();
         TransactionManager transactionManager = new TransactionManager();
         StatementGenerator statementGenerator = new StatementGenerator(transactionManager);
+        FilePersistenceService filePersistenceService = new FilePersistenceService();
 
-        // Seed starter accounts so View Accounts has data on first launch
-        seedAccounts(accountManager);
+        System.out.println("Loading account data from files...\n");
+        filePersistenceService.loadAccounts(accountManager);
+        filePersistenceService.loadTransactions(transactionManager);
+
+        // Seed starter accounts only on a first run, when nothing was loaded from disk
+        if (accountManager.getAccountCount() == 0) {
+            seedAccounts(accountManager);
+        }
 
         String title = "BANK ACCOUNT MANAGEMENT SYSTEM";
         int width = title.length() + 6; // padding on each side
@@ -72,6 +80,9 @@ public class Main {
                     break;
                 case 5:
                     programRunning = false;
+                    System.out.println();
+                    filePersistenceService.saveAccounts(accountManager);
+                    filePersistenceService.saveTransactions(transactionManager);
                     System.out.println("\nThank you for using Bank Account Management System!\n");
                     break;
                 default:
