@@ -82,7 +82,7 @@ public class AccountManager {
         return rows;
     }
 
-    private String[] formatAccountRow(Account a) { 
+    private String[] formatAccountRow(Account a) {
         return new String[] {
                 a.getAccountNumber(),
                 a.getCustomer().getName(),
