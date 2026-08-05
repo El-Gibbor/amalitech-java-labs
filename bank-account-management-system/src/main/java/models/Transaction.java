@@ -12,6 +12,7 @@ public class Transaction {
     private final double amount;
     private final String type; // "Deposit" or "Withdrawal"
     private final double balanceAfter;
+    private final LocalDateTime createdAt;
     private final String timestamp;
 
     public Transaction(String accountNumber, String type, double amount, double balanceAfter) {
@@ -20,7 +21,8 @@ public class Transaction {
         this.amount = amount;
         this.type = type;
         this.balanceAfter = balanceAfter;
-        this.timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a"));
+        this.createdAt = LocalDateTime.now();
+        this.timestamp = createdAt.format(DateTimeFormatter.ofPattern("dd-MM-yyyy hh:mm a"));
     }
 
     // Getters for all fields
@@ -35,6 +37,9 @@ public class Transaction {
     public double getBalanceAfter() { return balanceAfter; }
 
     public String getTimestamp() { return timestamp; }
+
+    /** @return the exact instant the transaction was recorded, for chronological comparison */
+    public LocalDateTime getCreatedAt() { return createdAt; }
 
     public void displayTransactionDetails() {
         System.out.println("Transaction ID: " + transactionId);
