@@ -107,7 +107,7 @@ public class FilePersistenceService {
         }
     }
 
-    // accountType|accountNumber|balance|status|customerType|customerId|name|age|contact|address
+    // accountType|accountNumber|balance|status|customerType|customerId|name|age|contact|email|address
     private String formatAccountLine(Account account) {
         Customer customer = account.getCustomer();
         return String.join(DELIMITER,
@@ -120,6 +120,7 @@ public class FilePersistenceService {
                 customer.getName(),
                 String.valueOf(customer.getAge()),
                 customer.getContact(),
+                customer.getEmail(),
                 customer.getAddress());
     }
 
@@ -134,13 +135,14 @@ public class FilePersistenceService {
         String name = f[6];
         int age = Integer.parseInt(f[7]);
         String contact = f[8];
-        String address = f[9];
+        String email = f[9];
+        String address = f[10];
 
         Customer customer;
         if ("Premium".equals(customerType)) {
-            customer = new PremiumCustomer(customerId, name, age, contact, address);
+            customer = new PremiumCustomer(customerId, name, age, contact, address, email);
         } else {
-            customer = new RegularCustomer(customerId, name, age, contact, address);
+            customer = new RegularCustomer(customerId, name, age, contact, address, email);
         }
         Customer.ensureCounterAtLeast(numericSuffix(customerId));
 
