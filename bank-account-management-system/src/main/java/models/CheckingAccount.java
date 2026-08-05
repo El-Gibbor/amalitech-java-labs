@@ -56,7 +56,7 @@ public class CheckingAccount extends Account {
      * @throws OverdraftExceededException if amount exceeds the balance plus the overdraft limit
      */
     @Override
-    public void withdraw(double amount) throws InvalidAmountException, OverdraftExceededException {
+    public synchronized void withdraw(double amount) throws InvalidAmountException, OverdraftExceededException {
         if (!isValidAmount(amount)) {
             throw new InvalidAmountException("Withdrawal amount must be greater than 0.");
         }

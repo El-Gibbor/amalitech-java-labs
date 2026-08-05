@@ -97,7 +97,7 @@ public abstract class Account implements Transactable {
     /**
      * @throws InvalidAmountException if amount is not greater than zero
      */
-    public void deposit(double amount) throws InvalidAmountException {
+    public synchronized void deposit(double amount) throws InvalidAmountException {
         if (!isValidAmount(amount)) {
             throw new InvalidAmountException("Deposit amount must be greater than 0.");
         }
@@ -109,7 +109,7 @@ public abstract class Account implements Transactable {
      * @throws InsufficientFundsException if amount exceeds the current balance
      * @throws OverdraftExceededException reserved for subclasses that allow overdraft
      */
-    public void withdraw(double amount)
+    public synchronized void withdraw(double amount)
             throws InvalidAmountException, InsufficientFundsException, OverdraftExceededException {
         if (!isValidAmount(amount)) {
             throw new InvalidAmountException("Withdrawal amount must be greater than 0.");
