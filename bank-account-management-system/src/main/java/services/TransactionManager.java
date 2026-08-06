@@ -13,8 +13,10 @@ import utils.TableFormatter;
 public class TransactionManager {
     private List<Transaction> transactions = new ArrayList<>();
 
-    /** @return true, since an ArrayList has no fixed capacity and a transaction is always accepted */
-    public boolean addTransaction(Transaction transaction) {
+    /**
+     * @return true, since an ArrayList has no fixed capacity and a transaction is always accepted
+     */
+    public synchronized boolean addTransaction(Transaction transaction) {
         transactions.add(transaction);
         return true;
     }
@@ -147,5 +149,60 @@ public class TransactionManager {
         return transactions.stream()
                 .sorted(descending ? byDate.reversed() : byDate)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Prints every recorded transaction across all accounts, sorted by amount or by date.
+     *
+     * @param sortByDate true to sort by timestamp, false to sort by amount
+     * @param descending true for highest amount or most recent first, false for the reverse
+     */
+    public void viewAllTransactionsSorted(boolean sortByDate, boolean descending) {
+        List<Transaction> sorted = sortByDate
+                ? getTransactionsSortedByDate(descending)
+                : getTransactionsSortedByAmount(descending);
+
+        if (sorted.isEmpty()) {
+            printNoTransactionsMessage();
+            return;
+        }
+
+        String[][] rows = sorted.stream()
+                .map(this::formatTransactionRowWithAccount)
+                .toArray(String[][]::new);
+        printTransactionTableWithAccount(rows);
+    }
+
+    private String[] formatTransactionRowWithAccount(Transaction t) {
+        String sign;
+        if (t.getType().equalsIgnoreCase("deposit")) {
+            sign = "+";
+        } else {
+            sign = "-";
+        }
+        return new String[] {
+                t.getTransactionId(),
+                t.getAccountNumber(),
+                t.getTimestamp(),
+                t.getType().toUpperCase(),
+                String.format("%s$%,.2f", sign, t.getAmount()),
+                String.format("$%,.2f", t.getBalanceAfter())
+        };
+    }
+
+    private void printTransactionTableWithAccount(String[][] rows) {
+        String[] headers = {"TXN ID", "ACCOUNT", "DATE/TIME", "TYPE", "AMOUNT", "BALANCE"};
+        int[] minWidths = {7, 8, 19, 10, 11, 9};
+        int[] widths = TableFormatter.columnWidths(headers, rows, minWidths);
+        String rowFormat = TableFormatter.buildRowFormat(widths);
+        String divider = TableFormatter.buildDivider(widths);
+
+        System.out.println(divider);
+        System.out.printf(rowFormat, (Object[]) headers);
+        System.out.println(divider);
+        for (String[] row : rows) {
+            System.out.printf(rowFormat, (Object[]) row);
+        }
+        System.out.println(divider);
     }
 }

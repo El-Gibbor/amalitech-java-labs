@@ -85,7 +85,7 @@ public class Main {
                     saveLoadDataMenu(scanner, accountManager, transactionManager, filePersistenceService);
                     break;
                 case 5:
-                    runConcurrentSimulation(scanner, accountManager);
+                    runConcurrentSimulation(scanner, accountManager, transactionManager);
                     break;
                 case 6:
                     runTests(scanner);
@@ -242,9 +242,10 @@ public class Main {
             System.out.println("\nPERFORM TRANSACTIONS");
             System.out.println("1. Process Transaction");
             System.out.println("2. View Transaction History");
-            System.out.println("3. Back to Main Menu\n");
+            System.out.println("3. View All Transactions (Sorted)");
+            System.out.println("4. Back to Main Menu\n");
 
-            int choice = readIntInRange(scanner, "Enter your choice: ", 1, 3);
+            int choice = readIntInRange(scanner, "Enter your choice: ", 1, 4);
 
             switch (choice) {
                 case 1:
@@ -254,6 +255,9 @@ public class Main {
                     viewTransactionHistory(scanner, accountManager, transactionManager);
                     break;
                 case 3:
+                    viewAllTransactionsSorted(scanner, transactionManager);
+                    break;
+                case 4:
                     inSubmenu = false;
                     break;
             }
@@ -385,6 +389,22 @@ public class Main {
         scanner.nextLine();
     }
 
+    private static void viewAllTransactionsSorted(Scanner scanner, TransactionManager transactionManager) {
+        System.out.println("\nVIEW ALL TRANSACTIONS (SORTED)");
+        System.out.println("─────────────────────────────────────────────\n");
+
+        System.out.println("Sort by:");
+        System.out.println("1. Amount (highest first)");
+        System.out.println("2. Date (most recent first)");
+        int sortChoice = readIntInRange(scanner, "\nSelect option (1-2): ", 1, 2);
+
+        System.out.println();
+        transactionManager.viewAllTransactionsSorted(sortChoice == 2, true);
+
+        System.out.print("\nPress Enter to continue... ");
+        scanner.nextLine();
+    }
+
     private static void generateAccountStatement(Scanner scanner, AccountManager accountManager,
             StatementGenerator statementGenerator) {
         System.out.println("\nGENERATE ACCOUNT STATEMENT");
@@ -404,7 +424,8 @@ public class Main {
         scanner.nextLine();
     }
 
-    private static void runConcurrentSimulation(Scanner scanner, AccountManager accountManager) {
+    private static void runConcurrentSimulation(Scanner scanner, AccountManager accountManager,
+            TransactionManager transactionManager) {
         System.out.println("\nCONCURRENT TRANSACTION SIMULATION");
         System.out.println("─────────────────────────────────────────────\n");
 
@@ -420,7 +441,7 @@ public class Main {
                     new ConcurrencyUtils.Operation("Withdrawal", 200));
 
             System.out.println();
-            ConcurrencyUtils.runConcurrentSimulation(account, operations);
+            ConcurrencyUtils.runConcurrentSimulation(account, transactionManager, operations);
         } catch (InvalidAccountException e) {
             System.out.println("\n❌ Error: " + e.getMessage());
         }
