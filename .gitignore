@@ -1,3 +1,4 @@
 dev-lessons.txt
 *.class
 target/
+blogging-platform/src/main/resources/db.properties
