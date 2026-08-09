@@ -14,75 +14,16 @@ unique constraint on the Reviews table.
 
 ## Conceptual model
 
-Entities and relationships only.
-```mermaid
-erDiagram
-    USERS ||--o{ POSTS : writes
-    USERS ||--o{ COMMENTS : writes
-    USERS ||--o{ REVIEWS : writes
-    POSTS ||--o{ COMMENTS : has
-    POSTS ||--o{ REVIEWS : receives
-    POSTS }o--o{ TAGS : "tagged with"
-```
+Entities and relationships only, no attributes, no keys.
+
+![Conceptual ERD showing Users, Posts, Comments, Reviews, and Tags with their relationships and cardinalities](images/conceptual-diagram.png)
 
 ## Logical and physical model
 
 Attributes, primary keys, foreign keys, data types, and the junction table that resolves the
 Posts to Tags many to many relationship.
 
-```mermaid
-erDiagram
-    USERS ||--o{ POSTS : writes
-    USERS ||--o{ COMMENTS : writes
-    USERS ||--o{ REVIEWS : writes
-    POSTS ||--o{ COMMENTS : has
-    POSTS ||--o{ REVIEWS : receives
-    POSTS ||--o{ POST_TAGS : ""
-    TAGS ||--o{ POST_TAGS : ""
-
-    USERS {
-        int user_id PK
-        varchar username UK
-        varchar email UK
-        timestamp created_at
-    }
-    POSTS {
-        int post_id PK
-        int user_id FK
-        varchar title
-        text content
-        timestamp published_at
-        timestamp created_at
-        timestamp updated_at
-    }
-    COMMENTS {
-        int comment_id PK
-        int post_id FK
-        int user_id FK
-        text content
-        timestamp created_at
-        timestamp updated_at
-    }
-    REVIEWS {
-        int review_id PK
-        int post_id FK
-        int user_id FK
-        smallint rating
-        text review_text
-        timestamp created_at
-        timestamp updated_at
-    }
-    TAGS {
-        int tag_id PK
-        varchar name UK
-        varchar slug UK
-        timestamp created_at
-    }
-    POST_TAGS {
-        int post_id PK
-        int tag_id PK
-    }
-```
+![Logical and physical ERD showing every table's columns, primary keys, foreign keys, and unique constraints, including the Post_Tags junction table](images/schema-diagram.png)
 
 ## Constraints the diagram cannot show on its own
 
