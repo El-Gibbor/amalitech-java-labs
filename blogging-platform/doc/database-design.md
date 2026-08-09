@@ -96,3 +96,26 @@ spanning more than one column, so I am recording these here in words.
 - Post_Tags has no unique constraint of its own beyond its composite primary key,
   `(post_id, tag_id)` together already prevent the same tag being attached to the same post
   twice.
+
+## Indexes
+
+I am indexing exactly the columns the specification names as frequently queried.
+
+- `posts.title`, for keyword search.
+- `posts.user_id`, for looking up an author's posts.
+- `tags.name`, for looking up a tag by name.
+
+I am not indexing every column. An index speeds up reads but slows down writes, since the
+engine has to update the index's own structure on every insert, update, or delete, so I am
+only adding one where a real query needs it.
+
+## Referential integrity
+
+Every foreign key needs an explicit deletion behavior rather than relying on a default.
+
+- Comments, Reviews, and Post_Tags use `ON DELETE CASCADE` when their parent Post is deleted,
+  a comment or review with no post to attach to has no reason to exist.
+- Post_Tags also uses `ON DELETE CASCADE` when its parent Tag is deleted.
+- Posts.user_id, Comments.user_id, and Reviews.user_id use `ON DELETE RESTRICT`, deleting a
+  user should not silently erase everything they authored, that has to be a deliberate,
+  separate decision, not an automatic side effect.
