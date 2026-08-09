@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controller.PostController">
+    <top>
+        <Label text="Posts" style="-fx-font-size: 18px; -fx-padding: 10;" />
+    </top>
+
+    <center>
+        <TableView fx:id="postsTable">
+            <columns>
+                <TableColumn fx:id="idColumn" text="ID" prefWidth="50" />
+                <TableColumn fx:id="titleColumn" text="Title" prefWidth="250" />
+                <TableColumn fx:id="userIdColumn" text="Author (user id)" prefWidth="120" />
+                <TableColumn fx:id="publishedAtColumn" text="Published" prefWidth="150" />
+            </columns>
+        </TableView>
+    </center>
+
+    <bottom>
+        <VBox spacing="8">
+            <padding>
+                <Insets top="10" right="10" bottom="10" left="10" />
+            </padding>
+
+            <TextField fx:id="titleField" promptText="Title" />
+            <TextArea fx:id="contentField" promptText="Content" prefRowCount="3" />
+
+            <HBox spacing="8">
+                <Button fx:id="createButton" text="Create" onAction="#onCreate" />
+                <Button fx:id="updateButton" text="Update Selected" onAction="#onUpdate" />
+                <Button fx:id="deleteButton" text="Delete Selected" onAction="#onDelete" />
+            </HBox>
+
+            <HBox spacing="8">
+                <Button fx:id="previousButton" text="Previous Page" onAction="#onPreviousPage" />
+                <Label fx:id="pageLabel" text="Page 1" />
+                <Button fx:id="nextButton" text="Next Page" onAction="#onNextPage" />
+            </HBox>
+
+            <Label fx:id="statusLabel" textFill="#b00020" />
+        </VBox>
+    </bottom>
+</BorderPane>
