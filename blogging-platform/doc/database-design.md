@@ -44,7 +44,6 @@ erDiagram
         int user_id PK
         varchar username UK
         varchar email UK
-        varchar password_hash
         timestamp created_at
     }
     POSTS {
@@ -105,7 +104,7 @@ I am indexing exactly the columns the specification names as frequently queried.
 - `posts.user_id`, for looking up an author's posts.
 - `tags.name`, for looking up a tag by name.
 
-I am not indexing every column. An index speeds up reads but slows down writes, since the
+Every column is not indexed. An index speeds up reads but slows down writes, since the
 engine has to update the index's own structure on every insert, update, or delete, so I am
 only adding one where a real query needs it.
 
