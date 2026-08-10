@@ -1,11 +1,14 @@
 package controller;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -30,14 +33,24 @@ public class PostController {
     // this fixed seeded user rather than to whoever is "logged in."
     private static final int CURRENT_USER_ID = 1;
 
+    private static final String MODE_KEYWORD = "Title/Content";
+    private static final String MODE_AUTHOR = "Author";
+    private static final String MODE_TAG = "Tag";
+
     @FXML private TableView<Post> postsTable;
     @FXML private TableColumn<Post, Integer> idColumn;
     @FXML private TableColumn<Post, String> titleColumn;
     @FXML private TableColumn<Post, Integer> userIdColumn;
     @FXML private TableColumn<Post, LocalDateTime> publishedAtColumn;
 
+    @FXML private ComboBox<String> searchModeComboBox;
+    @FXML private TextField searchField;
+    @FXML private Button searchButton;
+    @FXML private Button clearSearchButton;
+
     @FXML private TextField titleField;
     @FXML private TextArea contentField;
+    @FXML private CheckBox publishedCheckBox;
     @FXML private Button previousButton;
     @FXML private Button nextButton;
     @FXML private Label pageLabel;
@@ -46,8 +59,15 @@ public class PostController {
     private final PostService postService = new PostService(new PostDao());
     private int currentPage = 1;
 
+    // null means "no search active", browse all posts normally
+    private String activeSearchMode;
+    private String activeSearchQuery;
+
     @FXML
     private void initialize() {
+        searchModeComboBox.setItems(FXCollections.observableArrayList(MODE_KEYWORD, MODE_AUTHOR, MODE_TAG));
+        searchModeComboBox.getSelectionModel().selectFirst();
+
         idColumn.setCellValueFactory(new PropertyValueFactory<>("postId"));
         titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
         userIdColumn.setCellValueFactory(new PropertyValueFactory<>("userId"));
@@ -57,6 +77,7 @@ public class PostController {
             if (newSelection != null) {
                 titleField.setText(newSelection.getTitle());
                 contentField.setText(newSelection.getContent());
+                publishedCheckBox.setSelected(newSelection.getPublishedAt() != null);
             }
         });
 
@@ -66,7 +87,8 @@ public class PostController {
     @FXML
     private void onCreate() {
         try {
-            Post post = new Post(CURRENT_USER_ID, titleField.getText(), contentField.getText(), null);
+            LocalDateTime publishedAt = publishedCheckBox.isSelected() ? LocalDateTime.now() : null;
+            Post post = new Post(CURRENT_USER_ID, titleField.getText(), contentField.getText(), publishedAt);
             postService.createPost(post);
             clearForm();
             refreshTable();
@@ -86,6 +108,14 @@ public class PostController {
         try {
             selected.setTitle(titleField.getText());
             selected.setContent(contentField.getText());
+            if (publishedCheckBox.isSelected()) {
+                if (selected.getPublishedAt() == null) {
+                    selected.setPublishedAt(LocalDateTime.now());
+                }
+                // else: already published, keep its original publish time
+            } else {
+                selected.setPublishedAt(null);
+            }
             postService.updatePost(selected);
             refreshTable();
             showStatus("Post updated.");
@@ -112,6 +142,23 @@ public class PostController {
     }
 
     @FXML
+    private void onSearch() {
+        activeSearchMode = searchModeComboBox.getValue();
+        activeSearchQuery = searchField.getText();
+        currentPage = 1;
+        refreshTable();
+    }
+
+    @FXML
+    private void onClearSearch() {
+        activeSearchMode = null;
+        activeSearchQuery = null;
+        searchField.clear();
+        currentPage = 1;
+        refreshTable();
+    }
+
+    @FXML
     private void onPreviousPage() {
         if (currentPage > 1) {
             currentPage--;
@@ -127,24 +174,41 @@ public class PostController {
 
     private void refreshTable() {
         try {
-            var posts = postService.listPosts(currentPage, PAGE_SIZE);
+            var posts = fetchPosts(currentPage);
             if (posts.isEmpty() && currentPage > 1) {
                 // ran past the last page, step back rather than show an empty table
                 currentPage--;
-                posts = postService.listPosts(currentPage, PAGE_SIZE);
+                posts = fetchPosts(currentPage);
             }
             postsTable.setItems(FXCollections.observableArrayList(posts));
-            pageLabel.setText("Page " + currentPage);
+            pageLabel.setText("Page " + currentPage
+                    + (activeSearchMode == null ? "" : " (search: " + activeSearchMode + ")"));
             previousButton.setDisable(currentPage == 1);
             nextButton.setDisable(posts.size() < PAGE_SIZE);
-        } catch (PostServiceException e) {
+        } catch (ValidationException | PostServiceException e) {
             showError(e.getMessage());
+        }
+    }
+
+    // Dispatches to the active search mode, or plain browsing if no search is active
+    private List<Post> fetchPosts(int pageNumber) {
+        if (activeSearchMode == null) {
+            return postService.listPosts(pageNumber, PAGE_SIZE);
+        }
+        switch (activeSearchMode) {
+            case MODE_AUTHOR:
+                return postService.searchByAuthor(activeSearchQuery, pageNumber, PAGE_SIZE);
+            case MODE_TAG:
+                return postService.searchByTag(activeSearchQuery, pageNumber, PAGE_SIZE);
+            default:
+                return postService.searchByKeyword(activeSearchQuery, pageNumber, PAGE_SIZE);
         }
     }
 
     private void clearForm() {
         titleField.clear();
         contentField.clear();
+        publishedCheckBox.setSelected(false);
         postsTable.getSelectionModel().clearSelection();
     }
 

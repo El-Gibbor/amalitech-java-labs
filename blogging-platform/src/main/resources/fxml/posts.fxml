@@ -2,6 +2,8 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
@@ -15,16 +17,27 @@
             xmlns:fx="http://javafx.com/fxml"
             fx:controller="controller.PostController">
     <top>
-        <Label text="Posts" style="-fx-font-size: 18px; -fx-padding: 10;" />
+        <VBox>
+            <Label text="Posts" style="-fx-font-size: 18px; -fx-padding: 10;" />
+            <HBox spacing="8">
+                <padding>
+                    <Insets left="10" right="10" bottom="10" />
+                </padding>
+                <ComboBox fx:id="searchModeComboBox" />
+                <TextField fx:id="searchField" promptText="Search..." HBox.hgrow="ALWAYS" />
+                <Button fx:id="searchButton" text="Search" onAction="#onSearch" />
+                <Button fx:id="clearSearchButton" text="Clear" onAction="#onClearSearch" />
+            </HBox>
+        </VBox>
     </top>
 
     <center>
         <TableView fx:id="postsTable">
             <columns>
                 <TableColumn fx:id="idColumn" text="ID" prefWidth="50" />
-                <TableColumn fx:id="titleColumn" text="Title" prefWidth="250" />
-                <TableColumn fx:id="userIdColumn" text="Author (user id)" prefWidth="120" />
-                <TableColumn fx:id="publishedAtColumn" text="Published" prefWidth="150" />
+                <TableColumn fx:id="titleColumn" text="Title" prefWidth="280" />
+                <TableColumn fx:id="userIdColumn" text="Author (user id)" prefWidth="170" />
+                <TableColumn fx:id="publishedAtColumn" text="Published" prefWidth="280" />
             </columns>
         </TableView>
     </center>
@@ -37,6 +50,7 @@
 
             <TextField fx:id="titleField" promptText="Title" />
             <TextArea fx:id="contentField" promptText="Content" prefRowCount="3" />
+            <CheckBox fx:id="publishedCheckBox" text="Published" />
 
             <HBox spacing="8">
                 <Button fx:id="createButton" text="Create" onAction="#onCreate" />
