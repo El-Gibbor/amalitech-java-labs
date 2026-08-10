@@ -43,15 +43,55 @@ public class PostService {
      * @param pageSize   how many posts belong on one page
      */
     public List<Post> listPosts(int pageNumber, int pageSize) {
-        if (pageNumber < 1) {
-            throw new ValidationException("Page number must be 1 or greater.");
-        }
-        int offset = (pageNumber - 1) * pageSize;
+        int offset = validateAndComputeOffset(pageNumber, pageSize);
         try {
             return postDao.findAll(pageSize, offset);
         } catch (SQLException e) {
             throw new PostServiceException("Could not load posts.", e);
         }
+    }
+
+    public List<Post> searchByKeyword(String keyword, int pageNumber, int pageSize) {
+        requireSearchTerm(keyword, "keyword");
+        int offset = validateAndComputeOffset(pageNumber, pageSize);
+        try {
+            return postDao.searchByKeyword(keyword, pageSize, offset);
+        } catch (SQLException e) {
+            throw new PostServiceException("Could not search posts by keyword.", e);
+        }
+    }
+
+    public List<Post> searchByAuthor(String username, int pageNumber, int pageSize) {
+        requireSearchTerm(username, "author");
+        int offset = validateAndComputeOffset(pageNumber, pageSize);
+        try {
+            return postDao.searchByAuthor(username, pageSize, offset);
+        } catch (SQLException e) {
+            throw new PostServiceException("Could not search posts by author.", e);
+        }
+    }
+
+    public List<Post> searchByTag(String tagName, int pageNumber, int pageSize) {
+        requireSearchTerm(tagName, "tag");
+        int offset = validateAndComputeOffset(pageNumber, pageSize);
+        try {
+            return postDao.searchByTag(tagName, pageSize, offset);
+        } catch (SQLException e) {
+            throw new PostServiceException("Could not search posts by tag.", e);
+        }
+    }
+
+    private void requireSearchTerm(String value, String label) {
+        if (value == null || value.isBlank()) {
+            throw new ValidationException("Enter a " + label + " to search for.");
+        }
+    }
+
+    private int validateAndComputeOffset(int pageNumber, int pageSize) {
+        if (pageNumber < 1) {
+            throw new ValidationException("Page number must be 1 or greater.");
+        }
+        return (pageNumber - 1) * pageSize;
     }
 
     public Post updatePost(Post post) {

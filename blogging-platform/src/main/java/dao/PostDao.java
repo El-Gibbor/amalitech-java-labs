@@ -74,13 +74,74 @@ public class PostDao {
             statement.setInt(1, limit);
             statement.setInt(2, offset);
 
-            try (ResultSet resultSet = statement.executeQuery()) {
-                List<Post> posts = new ArrayList<>();
-                while (resultSet.next()) {
-                    posts.add(mapRow(resultSet));
-                }
-                return posts;
+            return mapRows(statement);
+        }
+    }
+
+    /** Case-insensitive match against title or content, using PostgreSQL's ILIKE. */
+    public List<Post> searchByKeyword(String keyword, int limit, int offset) throws SQLException {
+        String sql = "SELECT post_id, user_id, title, content, published_at, created_at, updated_at "
+                + "FROM posts WHERE title ILIKE ? OR content ILIKE ? "
+                + "ORDER BY created_at DESC LIMIT ? OFFSET ?";
+
+        try (Connection connection = DatabaseConnection.get();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            String pattern = "%" + keyword + "%";
+            statement.setString(1, pattern);
+            statement.setString(2, pattern);
+            statement.setInt(3, limit);
+            statement.setInt(4, offset);
+
+            return mapRows(statement);
+        }
+    }
+
+    /** Case-insensitive match against the author's username, joining to users. */
+    public List<Post> searchByAuthor(String username, int limit, int offset) throws SQLException {
+        String sql = "SELECT p.post_id, p.user_id, p.title, p.content, p.published_at, p.created_at, p.updated_at "
+                + "FROM posts p JOIN users u ON u.user_id = p.user_id "
+                + "WHERE u.username ILIKE ? "
+                + "ORDER BY p.created_at DESC LIMIT ? OFFSET ?";
+
+        try (Connection connection = DatabaseConnection.get();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, "%" + username + "%");
+            statement.setInt(2, limit);
+            statement.setInt(3, offset);
+
+            return mapRows(statement);
+        }
+    }
+
+    /** Case-insensitive match against a tag name, joining through post_tags to tags. */
+    public List<Post> searchByTag(String tagName, int limit, int offset) throws SQLException {
+        String sql = "SELECT p.post_id, p.user_id, p.title, p.content, p.published_at, p.created_at, p.updated_at "
+                + "FROM posts p "
+                + "JOIN post_tags pt ON pt.post_id = p.post_id "
+                + "JOIN tags t ON t.tag_id = pt.tag_id "
+                + "WHERE t.name ILIKE ? "
+                + "ORDER BY p.created_at DESC LIMIT ? OFFSET ?";
+
+        try (Connection connection = DatabaseConnection.get();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, "%" + tagName + "%");
+            statement.setInt(2, limit);
+            statement.setInt(3, offset);
+
+            return mapRows(statement);
+        }
+    }
+
+    private List<Post> mapRows(PreparedStatement statement) throws SQLException {
+        try (ResultSet resultSet = statement.executeQuery()) {
+            List<Post> posts = new ArrayList<>();
+            while (resultSet.next()) {
+                posts.add(mapRow(resultSet));
             }
+            return posts;
         }
     }
 
