@@ -21,9 +21,9 @@
 
     <TableView fx:id="commentsTable" VBox.vgrow="ALWAYS">
         <columns>
-            <TableColumn fx:id="commentIdColumn" text="ID" prefWidth="40" />
-            <TableColumn fx:id="commentUserIdColumn" text="User" prefWidth="50" />
-            <TableColumn fx:id="commentContentColumn" text="Comment" prefWidth="170" />
+            <TableColumn fx:id="commentIdColumn" text="ID" prefWidth="50" />
+            <TableColumn fx:id="commentUserIdColumn" text="User" prefWidth="60" />
+            <TableColumn fx:id="commentContentColumn" text="Comment" prefWidth="190" />
         </columns>
     </TableView>
 
