@@ -44,6 +44,10 @@
         </TableView>
     </center>
 
+    <right>
+        <fx:include fx:id="commentsPanel" source="comments.fxml" />
+    </right>
+
     <bottom>
         <VBox spacing="8">
             <padding>

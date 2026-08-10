@@ -55,6 +55,10 @@ public class PostController {
     @FXML private Button clearSearchButton;
     @FXML private ComboBox<String> sortComboBox;
 
+    // Injected by FXMLLoader from fx:include's fx:id, following the
+    // "<includeFxId>Controller" naming convention, no fx:id of its own needed.
+    @FXML private CommentController commentsPanelController;
+
     @FXML private TextField titleField;
     @FXML private TextArea contentField;
     @FXML private CheckBox publishedCheckBox;
@@ -90,6 +94,7 @@ public class PostController {
                 contentField.setText(newSelection.getContent());
                 publishedCheckBox.setSelected(newSelection.getPublishedAt() != null);
             }
+            commentsPanelController.setPost(newSelection);
         });
 
         refreshTable();

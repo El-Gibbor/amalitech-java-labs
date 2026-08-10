@@ -1,8 +1,8 @@
 # Database Design Document
 
 I'm building this on a relational paradigm, PostgreSQL specifically, for the entire core
-system. I am treating Comments and Reviews as unstructured content and will design a
-document schema for one of them as a comparison deliverable.
+system. Comments and Reviews are treated as unstructured content and a document schema
+is designed for one of them as a comparison deliverable.
 
 Reviews are modeled as distinct from Comments. A Review is a structured evaluation of a
 Post, a numeric rating from one to five plus optional text. A Comment is free text discussion
