@@ -8,9 +8,7 @@ import java.util.List;
  * A textbook top down merge sort. Worst case, average, and best case time
  * complexity are all O(n log n), since the list is halved log n times and
  * each of the n items is visited once per merge. Space complexity is O(n)
- * for the merged output lists. The sort is stable, items that compare
- * equal keep their original relative order, because merge only takes from
- * the right list when the left item is strictly greater.
+ * for the merged output lists.
  */
 public final class MergeSort {
     private MergeSort() {
