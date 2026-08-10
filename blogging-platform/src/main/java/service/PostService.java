@@ -1,6 +1,7 @@
 package service;
 
 import java.sql.SQLException;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +11,7 @@ import java.util.function.Supplier;
 
 import dao.PostDao;
 import model.Post;
+import util.MergeSort;
 
 /**
  * Business rules for posts. No SQL here, PostDao is the only thing in this
@@ -18,11 +20,22 @@ import model.Post;
 public class PostService {
     private static final int MAX_TITLE_LENGTH = 255;
     private static final String FOREIGN_KEY_VIOLATION = "23503";
+    private static final int UNPAGED = Integer.MAX_VALUE;
+
+    /** How a page of posts should be ordered before it is returned. */
+    public enum SortOption {
+        NEWEST_FIRST, TITLE_A_TO_Z, TITLE_Z_TO_A, PUBLISHED_EARLIEST_FIRST, PUBLISHED_LATEST_FIRST
+    }
 
     private final PostDao postDao;
 
     // Caches one page of results per query type, term, page number, and page size.
     private final Map<CacheKey, List<Post>> pageCache = new HashMap<>();
+
+    // Caches the full, unpaginated result set per query type and term, used only
+    // when a non default sort needs every matching row before it can paginate.
+    private final Map<FullResultKey, List<Post>> fullResultCache = new HashMap<>();
+
     private int cacheHits = 0;
     private int cacheMisses = 0;
 
@@ -54,54 +67,86 @@ public class PostService {
      * @param pageSize   how many posts belong on one page
      */
     public List<Post> listPosts(int pageNumber, int pageSize) {
+        return listPosts(pageNumber, pageSize, SortOption.NEWEST_FIRST);
+    }
+
+    public List<Post> listPosts(int pageNumber, int pageSize, SortOption sortOption) {
         int offset = validateAndComputeOffset(pageNumber, pageSize);
-        CacheKey key = new CacheKey(QueryType.BROWSE, null, pageNumber, pageSize);
-        return getOrLoad(key, () -> {
-            try {
-                return postDao.findAll(pageSize, offset);
-            } catch (SQLException e) {
-                throw new PostServiceException("Could not load posts.", e);
-            }
-        });
+        if (sortOption == SortOption.NEWEST_FIRST) {
+            CacheKey key = new CacheKey(QueryType.BROWSE, null, pageNumber, pageSize);
+            return getOrLoad(key, () -> {
+                try {
+                    return postDao.findAll(pageSize, offset);
+                } catch (SQLException e) {
+                    throw new PostServiceException("Could not load posts.", e);
+                }
+            });
+        }
+        List<Post> all = fetchAll(QueryType.BROWSE, null);
+        return sortAndPaginate(all, sortOption, offset, pageSize);
     }
 
     public List<Post> searchByKeyword(String keyword, int pageNumber, int pageSize) {
+        return searchByKeyword(keyword, pageNumber, pageSize, SortOption.NEWEST_FIRST);
+    }
+
+    public List<Post> searchByKeyword(String keyword, int pageNumber, int pageSize, SortOption sortOption) {
         requireSearchTerm(keyword, "keyword");
         int offset = validateAndComputeOffset(pageNumber, pageSize);
-        CacheKey key = new CacheKey(QueryType.KEYWORD, keyword, pageNumber, pageSize);
-        return getOrLoad(key, () -> {
-            try {
-                return postDao.searchByKeyword(keyword, pageSize, offset);
-            } catch (SQLException e) {
-                throw new PostServiceException("Could not search posts by keyword.", e);
-            }
-        });
+        if (sortOption == SortOption.NEWEST_FIRST) {
+            CacheKey key = new CacheKey(QueryType.KEYWORD, keyword, pageNumber, pageSize);
+            return getOrLoad(key, () -> {
+                try {
+                    return postDao.searchByKeyword(keyword, pageSize, offset);
+                } catch (SQLException e) {
+                    throw new PostServiceException("Could not search posts by keyword.", e);
+                }
+            });
+        }
+        List<Post> all = fetchAll(QueryType.KEYWORD, keyword);
+        return sortAndPaginate(all, sortOption, offset, pageSize);
     }
 
     public List<Post> searchByAuthor(String username, int pageNumber, int pageSize) {
+        return searchByAuthor(username, pageNumber, pageSize, SortOption.NEWEST_FIRST);
+    }
+
+    public List<Post> searchByAuthor(String username, int pageNumber, int pageSize, SortOption sortOption) {
         requireSearchTerm(username, "author");
         int offset = validateAndComputeOffset(pageNumber, pageSize);
-        CacheKey key = new CacheKey(QueryType.AUTHOR, username, pageNumber, pageSize);
-        return getOrLoad(key, () -> {
-            try {
-                return postDao.searchByAuthor(username, pageSize, offset);
-            } catch (SQLException e) {
-                throw new PostServiceException("Could not search posts by author.", e);
-            }
-        });
+        if (sortOption == SortOption.NEWEST_FIRST) {
+            CacheKey key = new CacheKey(QueryType.AUTHOR, username, pageNumber, pageSize);
+            return getOrLoad(key, () -> {
+                try {
+                    return postDao.searchByAuthor(username, pageSize, offset);
+                } catch (SQLException e) {
+                    throw new PostServiceException("Could not search posts by author.", e);
+                }
+            });
+        }
+        List<Post> all = fetchAll(QueryType.AUTHOR, username);
+        return sortAndPaginate(all, sortOption, offset, pageSize);
     }
 
     public List<Post> searchByTag(String tagName, int pageNumber, int pageSize) {
+        return searchByTag(tagName, pageNumber, pageSize, SortOption.NEWEST_FIRST);
+    }
+
+    public List<Post> searchByTag(String tagName, int pageNumber, int pageSize, SortOption sortOption) {
         requireSearchTerm(tagName, "tag");
         int offset = validateAndComputeOffset(pageNumber, pageSize);
-        CacheKey key = new CacheKey(QueryType.TAG, tagName, pageNumber, pageSize);
-        return getOrLoad(key, () -> {
-            try {
-                return postDao.searchByTag(tagName, pageSize, offset);
-            } catch (SQLException e) {
-                throw new PostServiceException("Could not search posts by tag.", e);
-            }
-        });
+        if (sortOption == SortOption.NEWEST_FIRST) {
+            CacheKey key = new CacheKey(QueryType.TAG, tagName, pageNumber, pageSize);
+            return getOrLoad(key, () -> {
+                try {
+                    return postDao.searchByTag(tagName, pageSize, offset);
+                } catch (SQLException e) {
+                    throw new PostServiceException("Could not search posts by tag.", e);
+                }
+            });
+        }
+        List<Post> all = fetchAll(QueryType.TAG, tagName);
+        return sortAndPaginate(all, sortOption, offset, pageSize);
     }
 
     // Returns the cached page if present, otherwise loads and caches it.
@@ -119,6 +164,63 @@ public class PostService {
     // A write can shift what belongs on any page, so the whole cache is dropped.
     private void clearCache() {
         pageCache.clear();
+        fullResultCache.clear();
+    }
+
+    // Every matching row for a query type and term, unpaginated. Only called when
+    // a non default sort is requested, since ordering by title or published date
+    // correctly across pages requires seeing every row before slicing out a page.
+    private List<Post> fetchAll(QueryType type, String term) {
+        FullResultKey key = new FullResultKey(type, term);
+        if (fullResultCache.containsKey(key)) {
+            cacheHits++;
+            return fullResultCache.get(key);
+        }
+        cacheMisses++;
+        List<Post> all;
+        try {
+            switch (type) {
+                case KEYWORD:
+                    all = postDao.searchByKeyword(term, UNPAGED, 0);
+                    break;
+                case AUTHOR:
+                    all = postDao.searchByAuthor(term, UNPAGED, 0);
+                    break;
+                case TAG:
+                    all = postDao.searchByTag(term, UNPAGED, 0);
+                    break;
+                default:
+                    all = postDao.findAll(UNPAGED, 0);
+            }
+        } catch (SQLException e) {
+            throw new PostServiceException("Could not load posts to sort.", e);
+        }
+        fullResultCache.put(key, all);
+        return all;
+    }
+
+    // Merge sorts the full list by sortOption, then slices out one page of it.
+    private List<Post> sortAndPaginate(List<Post> all, SortOption sortOption, int offset, int pageSize) {
+        List<Post> sorted = MergeSort.sort(all, comparatorFor(sortOption));
+        int from = Math.min(offset, sorted.size());
+        int to = Math.min(from + pageSize, sorted.size());
+        return sorted.subList(from, to);
+    }
+
+    // Draft posts, which have no published_at, always sort to the end either way.
+    private Comparator<Post> comparatorFor(SortOption sortOption) {
+        switch (sortOption) {
+            case TITLE_A_TO_Z:
+                return Comparator.comparing(Post::getTitle, String.CASE_INSENSITIVE_ORDER);
+            case TITLE_Z_TO_A:
+                return Comparator.comparing(Post::getTitle, String.CASE_INSENSITIVE_ORDER).reversed();
+            case PUBLISHED_EARLIEST_FIRST:
+                return Comparator.comparing(Post::getPublishedAt, Comparator.nullsLast(Comparator.naturalOrder()));
+            case PUBLISHED_LATEST_FIRST:
+                return Comparator.comparing(Post::getPublishedAt, Comparator.nullsLast(Comparator.reverseOrder()));
+            default:
+                throw new IllegalArgumentException("No comparator needed for " + sortOption);
+        }
     }
 
     public int getCacheHits() {
@@ -226,6 +328,34 @@ public class PostService {
         @Override
         public int hashCode() {
             return Objects.hash(type, term, pageNumber, pageSize);
+        }
+    }
+
+    // Identifies one cached full, unpaginated result set by query type and term.
+    private static final class FullResultKey {
+        private final QueryType type;
+        private final String term;
+
+        FullResultKey(QueryType type, String term) {
+            this.type = type;
+            this.term = term;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof FullResultKey)) {
+                return false;
+            }
+            FullResultKey that = (FullResultKey) other;
+            return type == that.type && Objects.equals(term, that.term);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(type, term);
         }
     }
 }

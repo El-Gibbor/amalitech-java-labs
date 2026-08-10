@@ -37,6 +37,12 @@ public class PostController {
     private static final String MODE_AUTHOR = "Author";
     private static final String MODE_TAG = "Tag";
 
+    private static final String SORT_NEWEST = "Newest first";
+    private static final String SORT_TITLE_ASC = "Title (A-Z)";
+    private static final String SORT_TITLE_DESC = "Title (Z-A)";
+    private static final String SORT_PUBLISHED_ASC = "Published (earliest)";
+    private static final String SORT_PUBLISHED_DESC = "Published (latest)";
+
     @FXML private TableView<Post> postsTable;
     @FXML private TableColumn<Post, Integer> idColumn;
     @FXML private TableColumn<Post, String> titleColumn;
@@ -47,6 +53,7 @@ public class PostController {
     @FXML private TextField searchField;
     @FXML private Button searchButton;
     @FXML private Button clearSearchButton;
+    @FXML private ComboBox<String> sortComboBox;
 
     @FXML private TextField titleField;
     @FXML private TextArea contentField;
@@ -67,6 +74,10 @@ public class PostController {
     private void initialize() {
         searchModeComboBox.setItems(FXCollections.observableArrayList(MODE_KEYWORD, MODE_AUTHOR, MODE_TAG));
         searchModeComboBox.getSelectionModel().selectFirst();
+
+        sortComboBox.setItems(FXCollections.observableArrayList(
+                SORT_NEWEST, SORT_TITLE_ASC, SORT_TITLE_DESC, SORT_PUBLISHED_ASC, SORT_PUBLISHED_DESC));
+        sortComboBox.getSelectionModel().selectFirst();
 
         idColumn.setCellValueFactory(new PropertyValueFactory<>("postId"));
         titleColumn.setCellValueFactory(new PropertyValueFactory<>("title"));
@@ -159,6 +170,12 @@ public class PostController {
     }
 
     @FXML
+    private void onSortChanged() {
+        currentPage = 1;
+        refreshTable();
+    }
+
+    @FXML
     private void onPreviousPage() {
         if (currentPage > 1) {
             currentPage--;
@@ -192,17 +209,35 @@ public class PostController {
 
     // Dispatches to the active search mode, or plain browsing if no search is active
     private List<Post> fetchPosts(int pageNumber) {
+        PostService.SortOption sortOption = selectedSortOption();
         if (activeSearchMode == null) {
-            return postService.listPosts(pageNumber, PAGE_SIZE);
+            return postService.listPosts(pageNumber, PAGE_SIZE, sortOption);
         }
         switch (activeSearchMode) {
             case MODE_AUTHOR:
-                return postService.searchByAuthor(activeSearchQuery, pageNumber, PAGE_SIZE);
+                return postService.searchByAuthor(activeSearchQuery, pageNumber, PAGE_SIZE, sortOption);
             case MODE_TAG:
-                return postService.searchByTag(activeSearchQuery, pageNumber, PAGE_SIZE);
+                return postService.searchByTag(activeSearchQuery, pageNumber, PAGE_SIZE, sortOption);
             default:
-                return postService.searchByKeyword(activeSearchQuery, pageNumber, PAGE_SIZE);
+                return postService.searchByKeyword(activeSearchQuery, pageNumber, PAGE_SIZE, sortOption);
         }
+    }
+
+    private PostService.SortOption selectedSortOption() {
+        String label = sortComboBox.getValue();
+        if (SORT_TITLE_ASC.equals(label)) {
+            return PostService.SortOption.TITLE_A_TO_Z;
+        }
+        if (SORT_TITLE_DESC.equals(label)) {
+            return PostService.SortOption.TITLE_Z_TO_A;
+        }
+        if (SORT_PUBLISHED_ASC.equals(label)) {
+            return PostService.SortOption.PUBLISHED_EARLIEST_FIRST;
+        }
+        if (SORT_PUBLISHED_DESC.equals(label)) {
+            return PostService.SortOption.PUBLISHED_LATEST_FIRST;
+        }
+        return PostService.SortOption.NEWEST_FIRST;
     }
 
     private void clearForm() {

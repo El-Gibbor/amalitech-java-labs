@@ -27,6 +27,8 @@
                 <TextField fx:id="searchField" promptText="Search..." HBox.hgrow="ALWAYS" />
                 <Button fx:id="searchButton" text="Search" onAction="#onSearch" />
                 <Button fx:id="clearSearchButton" text="Clear" onAction="#onClearSearch" />
+                <Label text="Sort:" />
+                <ComboBox fx:id="sortComboBox" onAction="#onSortChanged" />
             </HBox>
         </VBox>
     </top>
