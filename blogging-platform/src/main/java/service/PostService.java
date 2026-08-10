@@ -1,8 +1,12 @@
 package service;
 
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import dao.PostDao;
 import model.Post;
@@ -17,6 +21,11 @@ public class PostService {
 
     private final PostDao postDao;
 
+    // Caches one page of results per query type, term, page number, and page size.
+    private final Map<CacheKey, List<Post>> pageCache = new HashMap<>();
+    private int cacheHits = 0;
+    private int cacheMisses = 0;
+
     public PostService(PostDao postDao) {
         this.postDao = postDao;
     }
@@ -24,7 +33,9 @@ public class PostService {
     public Post createPost(Post post) {
         validate(post);
         try {
-            return postDao.create(post);
+            Post created = postDao.create(post);
+            clearCache();
+            return created;
         } catch (SQLException e) {
             throw translate(e, "create the post");
         }
@@ -44,41 +55,78 @@ public class PostService {
      */
     public List<Post> listPosts(int pageNumber, int pageSize) {
         int offset = validateAndComputeOffset(pageNumber, pageSize);
-        try {
-            return postDao.findAll(pageSize, offset);
-        } catch (SQLException e) {
-            throw new PostServiceException("Could not load posts.", e);
-        }
+        CacheKey key = new CacheKey(QueryType.BROWSE, null, pageNumber, pageSize);
+        return getOrLoad(key, () -> {
+            try {
+                return postDao.findAll(pageSize, offset);
+            } catch (SQLException e) {
+                throw new PostServiceException("Could not load posts.", e);
+            }
+        });
     }
 
     public List<Post> searchByKeyword(String keyword, int pageNumber, int pageSize) {
         requireSearchTerm(keyword, "keyword");
         int offset = validateAndComputeOffset(pageNumber, pageSize);
-        try {
-            return postDao.searchByKeyword(keyword, pageSize, offset);
-        } catch (SQLException e) {
-            throw new PostServiceException("Could not search posts by keyword.", e);
-        }
+        CacheKey key = new CacheKey(QueryType.KEYWORD, keyword, pageNumber, pageSize);
+        return getOrLoad(key, () -> {
+            try {
+                return postDao.searchByKeyword(keyword, pageSize, offset);
+            } catch (SQLException e) {
+                throw new PostServiceException("Could not search posts by keyword.", e);
+            }
+        });
     }
 
     public List<Post> searchByAuthor(String username, int pageNumber, int pageSize) {
         requireSearchTerm(username, "author");
         int offset = validateAndComputeOffset(pageNumber, pageSize);
-        try {
-            return postDao.searchByAuthor(username, pageSize, offset);
-        } catch (SQLException e) {
-            throw new PostServiceException("Could not search posts by author.", e);
-        }
+        CacheKey key = new CacheKey(QueryType.AUTHOR, username, pageNumber, pageSize);
+        return getOrLoad(key, () -> {
+            try {
+                return postDao.searchByAuthor(username, pageSize, offset);
+            } catch (SQLException e) {
+                throw new PostServiceException("Could not search posts by author.", e);
+            }
+        });
     }
 
     public List<Post> searchByTag(String tagName, int pageNumber, int pageSize) {
         requireSearchTerm(tagName, "tag");
         int offset = validateAndComputeOffset(pageNumber, pageSize);
-        try {
-            return postDao.searchByTag(tagName, pageSize, offset);
-        } catch (SQLException e) {
-            throw new PostServiceException("Could not search posts by tag.", e);
+        CacheKey key = new CacheKey(QueryType.TAG, tagName, pageNumber, pageSize);
+        return getOrLoad(key, () -> {
+            try {
+                return postDao.searchByTag(tagName, pageSize, offset);
+            } catch (SQLException e) {
+                throw new PostServiceException("Could not search posts by tag.", e);
+            }
+        });
+    }
+
+    // Returns the cached page if present, otherwise loads and caches it.
+    private List<Post> getOrLoad(CacheKey key, Supplier<List<Post>> loader) {
+        if (pageCache.containsKey(key)) {
+            cacheHits++;
+            return pageCache.get(key);
         }
+        cacheMisses++;
+        List<Post> result = loader.get();
+        pageCache.put(key, result);
+        return result;
+    }
+
+    // A write can shift what belongs on any page, so the whole cache is dropped.
+    private void clearCache() {
+        pageCache.clear();
+    }
+
+    public int getCacheHits() {
+        return cacheHits;
+    }
+
+    public int getCacheMisses() {
+        return cacheMisses;
     }
 
     private void requireSearchTerm(String value, String label) {
@@ -104,6 +152,7 @@ public class PostService {
             if (!updated) {
                 throw new ValidationException("Post " + post.getPostId() + " does not exist.");
             }
+            clearCache();
             return post;
         } catch (SQLException e) {
             throw translate(e, "update the post");
@@ -116,6 +165,7 @@ public class PostService {
             if (!deleted) {
                 throw new ValidationException("Post " + postId + " does not exist.");
             }
+            clearCache();
         } catch (SQLException e) {
             throw new PostServiceException("Could not delete the post.", e);
         }
@@ -138,5 +188,44 @@ public class PostService {
             return new PostServiceException("Could not " + action + ": the referenced user does not exist.", e);
         }
         return new PostServiceException("Could not " + action + ".", e);
+    }
+
+    private enum QueryType {
+        BROWSE, KEYWORD, AUTHOR, TAG
+    }
+
+    // Uniquely identifies one cached page across every read method.
+    private static final class CacheKey {
+        private final QueryType type;
+        private final String term;
+        private final int pageNumber;
+        private final int pageSize;
+
+        CacheKey(QueryType type, String term, int pageNumber, int pageSize) {
+            this.type = type;
+            this.term = term;
+            this.pageNumber = pageNumber;
+            this.pageSize = pageSize;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof CacheKey)) {
+                return false;
+            }
+            CacheKey that = (CacheKey) other;
+            return pageNumber == that.pageNumber
+                    && pageSize == that.pageSize
+                    && type == that.type
+                    && Objects.equals(term, that.term);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(type, term, pageNumber, pageSize);
+        }
     }
 }
