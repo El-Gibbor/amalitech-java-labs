@@ -18,7 +18,9 @@ import util.MergeSort;
  * class that knows a database exists at all.
  */
 public class PostService {
+    private static final int MIN_TITLE_LENGTH = 5;
     private static final int MAX_TITLE_LENGTH = 255;
+    private static final int MIN_CONTENT_LENGTH = 20;
     private static final String FOREIGN_KEY_VIOLATION = "23503";
     private static final int UNPAGED = Integer.MAX_VALUE;
 
@@ -46,6 +48,9 @@ public class PostService {
     public Post createPost(Post post) {
         validate(post);
         try {
+            if (postDao.existsByAuthorAndTitle(post.getUserId(), post.getTitle(), null)) {
+                throw new ValidationException("You already have a post titled \"" + post.getTitle() + "\".");
+            }
             Post created = postDao.create(post);
             clearCache();
             return created;
@@ -250,6 +255,9 @@ public class PostService {
             throw new ValidationException("Cannot update a post that has no id yet.");
         }
         try {
+            if (postDao.existsByAuthorAndTitle(post.getUserId(), post.getTitle(), post.getPostId())) {
+                throw new ValidationException("You already have a post titled \"" + post.getTitle() + "\".");
+            }
             boolean updated = postDao.update(post);
             if (!updated) {
                 throw new ValidationException("Post " + post.getPostId() + " does not exist.");
@@ -277,11 +285,17 @@ public class PostService {
         if (post.getTitle() == null || post.getTitle().isBlank()) {
             throw new ValidationException("Title cannot be blank.");
         }
+        if (post.getTitle().trim().length() < MIN_TITLE_LENGTH) {
+            throw new ValidationException("Title must be at least " + MIN_TITLE_LENGTH + " characters long.");
+        }
         if (post.getTitle().length() > MAX_TITLE_LENGTH) {
             throw new ValidationException("Title cannot be longer than " + MAX_TITLE_LENGTH + " characters.");
         }
         if (post.getContent() == null || post.getContent().isBlank()) {
             throw new ValidationException("Content cannot be blank.");
+        }
+        if (post.getContent().trim().length() < MIN_CONTENT_LENGTH) {
+            throw new ValidationException("Content must be at least " + MIN_CONTENT_LENGTH + " characters long.");
         }
     }
 
