@@ -1,7 +1,9 @@
 # NoSQL Comparison
 
 I modeled Comments as a document schema, embedded inside their Post rather than kept as a
-separate collection. The schema itself is in `db/comments-nosql-schema.js`.
+separate collection. The schema itself is in `db/comments-nosql-schema.js`. Reviews look like
+the same kind of data at first glance, structured, per post, written alongside a comment
+thread, but I kept them relational instead.
 
 ## Justification
 
