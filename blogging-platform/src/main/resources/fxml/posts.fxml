@@ -5,6 +5,8 @@
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextArea?>
@@ -44,8 +46,25 @@
         </TableView>
     </center>
 
+    <left>
+        <fx:include fx:id="tagsPanel" source="tags.fxml" />
+    </left>
+
     <right>
-        <fx:include fx:id="commentsPanel" source="comments.fxml" />
+        <TabPane tabClosingPolicy="UNAVAILABLE" prefWidth="300">
+            <tabs>
+                <Tab text="Comments">
+                    <content>
+                        <fx:include fx:id="commentsPanel" source="comments.fxml" />
+                    </content>
+                </Tab>
+                <Tab text="Reviews">
+                    <content>
+                        <fx:include fx:id="reviewsPanel" source="reviews.fxml" />
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
     </right>
 
     <bottom>

@@ -1,8 +1,8 @@
 
 Data layer and persistence stage of a blogging platform. It is a JavaFX
 desktop application backed by PostgreSQL, reached through plain JDBC, no ORM. It manages
-Posts and Comments, with searching, sorting, caching, and a measured performance report
-included as evidence of the optimizations applied.
+Posts, Comments, Tags, and Reviews, with searching, sorting, caching, and a measured
+performance report included as evidence of the optimizations applied.
 
 ## Prerequisites
 
@@ -47,30 +47,48 @@ cp src/main/resources/db.properties.example src/main/resources/db.properties
 mvn clean javafx:run
 ```
 
-This opens the Posts screen. Posts are listed with pagination, a search bar lets you
-search by title or content, by author, or by tag, all case insensitive, and a sort
-control lets you reorder the full matching result set by title or by published date. Sorting is done in [`util.MergeSort`](src/main/java/util/MergeSort.java) once a non default option
-is chosen, and selecting a post shows its comments in a panel on the right,
-where you can add, edit, and delete comments on that post.
+This opens a window with two tabs, Posts and Analytics.
+
+Posts are listed with pagination, a search bar lets you search by title or content, by
+author, or by tag, all case insensitive, and a sort control lets you reorder the full
+matching result set by title or by published date. Sorting is done in
+[`util.MergeSort`](src/main/java/util/MergeSort.java) once a non default option is chosen.
+
+The panel on the left manages Tags: create or delete a tag from the full list at any
+time, and, once a post is selected, assign an existing tag to it or remove one already
+assigned. On the right, a tab per post switches between Comments, where you can add,
+edit, and delete comments, and Reviews, where you can add, edit, and delete a 1-5 star
+rating with optional text, and see the post's average rating update live.
+
+Analytics runs four read only reports over the live database: the most commented posts,
+the highest rated posts, the most used tags, and the most active authors, each a `GROUP
+BY` query in [`dao.AnalyticsDao`](src/main/java/dao/AnalyticsDao.java) joining across two
+tables. A "Top N" control and a Refresh button are there because this screen holds no
+cache of its own, unlike the Posts screen, so it always reflects whatever the database
+currently contains; it also refreshes itself automatically whenever you switch to it.
 
 There is no **login screen** in this stage of the project. Anything created through the
-application, a new post or a new comment, is attributed to a fixed seeded user, since
-there is no session to attribute it to instead.
+application, a new post, comment, or review, is attributed to a fixed seeded user, since
+there is no session to attribute it to instead. Tags carry no author and so aren't
+affected by this.
 
 
 ## Documentation
 
 * [`doc/database-design.md`](doc/database-design.md) covers the conceptual, logical, and
   physical models, the reasoning behind Reviews existing as its own entity rather than a
-  renamed Comment, the constraints a diagram cannot show on its own, and the indexing
-  and referential integrity decisions.
+  renamed Comment, the constraints a diagram cannot show on its own, the indexing and
+  referential integrity decisions, how far each entity's application layer reaches, and
+  the aggregate queries behind the Analytics screen.
 * [`doc/performance-report.md`](doc/performance-report.md) measures caching and indexing
   against a real database, including a case where an index did not help and an
   explanation of why, rather than only reporting the numbers that looked good.
 * [`doc/nosql-comparison.md`](doc/nosql-comparison.md) models Comments as an embedded
-  MongoDB document and compares that against the relational design.
-* [`doc/testing-evidence.md`](doc/testing-evidence.md) covers the automated JUnit suite
-  and the JavaFX interface, verified with real screenshots.
+  MongoDB document and compares that against the relational design, then explains why
+  Reviews, despite looking like the same kind of data, were kept relational instead.
+* [`doc/testing-evidence.md`](doc/testing-evidence.md) covers the automated JUnit suite,
+  five service classes strong, and the JavaFX interface, verified with real screenshots
+  of Tags, Reviews, and Analytics alongside the original Comments evidence.
 
 ## Reproducing the performance numbers
 

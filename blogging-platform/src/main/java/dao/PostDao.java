@@ -135,6 +135,31 @@ public class PostDao {
         }
     }
 
+    /**
+     * Case-insensitive check for whether this author already has a post with
+     * this exact title. Pass the post's own id as excludingPostId when
+     * checking an update, so a post is never flagged as a duplicate of itself;
+     * pass null when checking a brand new post.
+     */
+    public boolean existsByAuthorAndTitle(int userId, String title, Integer excludingPostId) throws SQLException {
+        String sql = "SELECT 1 FROM posts WHERE user_id = ? AND LOWER(title) = LOWER(?)"
+                + (excludingPostId != null ? " AND post_id <> ?" : "") + " LIMIT 1";
+
+        try (Connection connection = DatabaseConnection.get();
+                PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setInt(1, userId);
+            statement.setString(2, title);
+            if (excludingPostId != null) {
+                statement.setInt(3, excludingPostId);
+            }
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+        }
+    }
+
     private List<Post> mapRows(PreparedStatement statement) throws SQLException {
         try (ResultSet resultSet = statement.executeQuery()) {
             List<Post> posts = new ArrayList<>();

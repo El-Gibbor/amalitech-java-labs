@@ -25,6 +25,7 @@ import model.Post;
  */
 class PostServiceTest {
     private static final int SEEDED_USER_ID = 1;
+    private static final int OTHER_SEEDED_USER_ID = 2;
 
     private PostService postService;
 
@@ -71,6 +72,71 @@ class PostServiceTest {
     }
 
     @Test
+    void createPost_titleUnderMinLength_isRejected() {
+        Post post = new Post(SEEDED_USER_ID, "Hi", "Some content, long enough to pass on its own.", null);
+        assertThrows(ValidationException.class, () -> postService.createPost(post));
+    }
+
+    @Test
+    void createPost_contentUnderMinLength_isRejected() {
+        Post post = new Post(SEEDED_USER_ID, "A short post", "Too short.", null);
+        assertThrows(ValidationException.class, () -> postService.createPost(post));
+    }
+
+    @Test
+    void createPost_duplicateTitleForTheSameAuthor_isRejected() {
+        Post first = postService.createPost(
+                new Post(SEEDED_USER_ID, "Duplicate Title Test", "The first post with this title.", null));
+        try {
+            Post duplicate = new Post(SEEDED_USER_ID, "duplicate title test", "A second post, same title.", null);
+            assertThrows(ValidationException.class, () -> postService.createPost(duplicate),
+                    "the same author reusing a title, even with different casing, should be rejected");
+        } finally {
+            postService.deletePost(first.getPostId());
+        }
+    }
+
+    @Test
+    void createPost_sameTitleFromADifferentAuthor_isAllowed() {
+        Post first = postService.createPost(
+                new Post(SEEDED_USER_ID, "Shared Title Across Authors", "Posted by the first author.", null));
+        try {
+            Post second = postService.createPost(new Post(OTHER_SEEDED_USER_ID, "Shared Title Across Authors",
+                    "Posted by a different author.", null));
+            postService.deletePost(second.getPostId());
+        } finally {
+            postService.deletePost(first.getPostId());
+        }
+    }
+
+    @Test
+    void updatePost_renamingToATitleTheSameAuthorAlreadyUses_isRejected() {
+        Post existing = postService.createPost(
+                new Post(SEEDED_USER_ID, "Already Taken Title", "Content for the existing post.", null));
+        Post toRename = postService.createPost(
+                new Post(SEEDED_USER_ID, "Working Title", "Content for the post being renamed.", null));
+        try {
+            toRename.setTitle("Already Taken Title");
+            assertThrows(ValidationException.class, () -> postService.updatePost(toRename));
+        } finally {
+            postService.deletePost(existing.getPostId());
+            postService.deletePost(toRename.getPostId());
+        }
+    }
+
+    @Test
+    void updatePost_keepingItsOwnTitle_isNotFlaggedAsADuplicateOfItself() {
+        Post created = postService.createPost(
+                new Post(SEEDED_USER_ID, "Unchanged Title", "Original content for this test.", null));
+        try {
+            created.setContent("Edited content for this test.");
+            postService.updatePost(created);
+        } finally {
+            postService.deletePost(created.getPostId());
+        }
+    }
+
+    @Test
     void createPost_unknownUserId_translatesTheForeignKeyViolation() {
         Post post = new Post(999_999, "Orphan post", "No such user exists.", null);
         PostServiceException exception = assertThrows(PostServiceException.class, () -> postService.createPost(post));
@@ -80,15 +146,16 @@ class PostServiceTest {
 
     @Test
     void updatePost_changesPersistAndCanBeReadBack() {
-        Post created = postService.createPost(new Post(SEEDED_USER_ID, "Before update", "Original content.", null));
+        Post created = postService.createPost(
+                new Post(SEEDED_USER_ID, "Before update", "Original content for this test.", null));
         try {
             created.setTitle("After update");
-            created.setContent("Changed content.");
+            created.setContent("Changed content for this test.");
             postService.updatePost(created);
 
             Post reloaded = postService.getPost(created.getPostId()).orElseThrow();
             assertEquals("After update", reloaded.getTitle());
-            assertEquals("Changed content.", reloaded.getContent());
+            assertEquals("Changed content for this test.", reloaded.getContent());
         } finally {
             postService.deletePost(created.getPostId());
         }
@@ -96,7 +163,8 @@ class PostServiceTest {
 
     @Test
     void updatePost_publishingADraft_setsPublishedAt() {
-        Post created = postService.createPost(new Post(SEEDED_USER_ID, "Draft post", "Not published yet.", null));
+        Post created = postService
+                .createPost(new Post(SEEDED_USER_ID, "Draft post", "Not published yet, still a draft.", null));
         try {
             assertNull(created.getPublishedAt());
             created.setPublishedAt(LocalDateTime.now());
