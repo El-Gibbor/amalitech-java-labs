@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+
+<TabPane xmlns="http://javafx.com/javafx"
+         xmlns:fx="http://javafx.com/fxml"
+         fx:controller="controller.MainController"
+         tabClosingPolicy="UNAVAILABLE">
+    <tabs>
+        <Tab text="Posts">
+            <content>
+                <fx:include source="posts.fxml" />
+            </content>
+        </Tab>
+        <Tab fx:id="analyticsTab" text="Analytics">
+            <content>
+                <fx:include fx:id="analyticsPanel" source="analytics.fxml" />
+            </content>
+        </Tab>
+    </tabs>
+</TabPane>
