@@ -45,10 +45,6 @@ I am indexing exactly the columns the specification names as frequently queried.
 - `posts.user_id`, for looking up an author's posts.
 - `tags.name`, for looking up a tag by name.
 
-Every column is not indexed. An index speeds up reads but slows down writes, since the
-engine has to update the index's own structure on every insert, update, or delete, so I am
-only adding one where a real query needs it.
-
 ## Referential integrity
 
 Every foreign key needs an explicit deletion behavior rather than relying on a default.
@@ -59,3 +55,16 @@ Every foreign key needs an explicit deletion behavior rather than relying on a d
 - Posts.user_id, Comments.user_id, and Reviews.user_id use `ON DELETE RESTRICT`, deleting a
   user should not silently erase everything they authored, that has to be a deliberate,
   separate decision, not an automatic side effect.
+
+## Analytics queries
+
+The Analytics screen ([`AnalyticsDao`](../src/main/java/dao/AnalyticsDao.java)) runs four
+read only aggregate reports, each grouping across a foreign key rather than filtering by a
+single column:
+
+- Most commented posts: `posts` LEFT JOIN `comments`, grouped by post, ordered by comment count.
+- Highest rated posts: `posts` JOIN `reviews`, grouped by post, ordered by average rating (an
+  inner join, not a left one, since a post with no reviews has nothing to average).
+- Most used tags: `tags` LEFT JOIN `post_tags`, grouped by tag, ordered by how many posts use it.
+- Most active authors: `users` LEFT JOIN `posts`, grouped by user, ordered by post count.
+
